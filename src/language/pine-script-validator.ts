@@ -1,6 +1,7 @@
 import { ValidationAcceptor, ValidationChecks } from 'langium';
-import { PineScriptAstType, SimpleNameInitialization, FunctionDeclaration, NameReference } from './generated/ast.js';
+import { PineScriptAstType, SimpleNameInitialization, FunctionDeclaration, NameReference, PrimaryExpressionCall } from './generated/ast.js';
 import type { PineScriptServices } from './pine-script-module.js';
+import { BuiltInValidator } from './built-ins/built-in-validator.js';
 
 /**
  * Register custom validation checks.
@@ -11,7 +12,8 @@ export function registerValidationChecks(services: PineScriptServices) {
     const checks: ValidationChecks<PineScriptAstType> = {
         SimpleNameInitialization: validator.checkVariableNaming,
         FunctionDeclaration: validator.checkFunctionNaming,
-        NameReference: validator.checkNameReference
+        NameReference: validator.checkNameReference,
+        PrimaryExpressionCall: validator.checkFunctionCall
     };
     registry.register(checks, validator);
 }
@@ -20,6 +22,7 @@ export function registerValidationChecks(services: PineScriptServices) {
  * Implementation of custom validations.
  */
 export class PineScriptValidator {
+    private builtInValidator = new BuiltInValidator();
 
     checkVariableNaming(variable: SimpleNameInitialization, accept: ValidationAcceptor): void {
         if (variable.declaration.name.length === 0) {
@@ -38,9 +41,13 @@ export class PineScriptValidator {
     }
 
     checkNameReference(ref: NameReference, accept: ValidationAcceptor): void {
-        if (ref.name.length === 0) {
+        if (ref.name.parts.length === 0) {
             accept('error', 'Reference name must not be empty.', { node: ref, property: 'name' });
         }
     }
 
+    checkFunctionCall(call: PrimaryExpressionCall, accept: ValidationAcceptor): void {
+        // Validate built-in function calls
+        this.builtInValidator.validateBuiltInFunctionCall(call, accept);
+    }
 }

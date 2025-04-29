@@ -1,0 +1,26 @@
+//@version=5
+indicator("Namespace Test", overlay=true)
+
+// Using namespaced functions
+var sma = ta.sma(close, 14)
+var ema = ta.ema(close, 14)
+
+// Math functions
+var maxValue = math.max(high, open)
+var minValue = math.min(low, close)
+
+// Input functions
+var period = input.int(14, "SMA Period", minval=1, maxval=500)
+var sourceInput = input.source(close, "Source")
+
+// Color functions
+var transparentRed = color.new(color.red, 70)  // 70% transparency
+var customColor = color.rgb(255, 128, 0)       // Orange
+
+// Using the values
+var result = sma + ema
+var diff = maxValue - minValue
+
+// Plotting
+plot(sma, "SMA", color=color.blue)
+plot(ema, "EMA", color=color.red)

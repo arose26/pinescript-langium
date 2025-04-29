@@ -1,0 +1,111 @@
+indicator(title="PCA Risk Indicator", shorttitle="PCA-RI", overlay=false)
+
+//---- Settings
+source          = input.source(defval=close , title='Source'    , group='General setting')
+mtf             = input.timeframe(defval='' , title='Timeframe' , group='General setting')
+
+//---- Display
+display_input   = input.bool(false, title="Display raw input indicators ?"  , group="Display")
+offsetDisplay   = input.int(defval=-100, title="Offset raw input indicators", group="Display")
+display_output  = input.bool(true,  title="Display output indicators ?"     , group="Display")
+ncPCA           = input.string('Centered Reduced', title='How to display all PCA indicators ?', options=['Centered Reduced','Original'], group='Display')
+
+
+//---- Method
+MaxMinNz(value,max=100,min=0,def=50) =>
+    nz(math.max(math.min(value,max),min),def)
+    
+isPL(src=close,left=3,right=0) =>
+    ta.pivotlow(src,left,right)
+
+isPH(src=close,left=3,right=0) =>
+    ta.pivothigh(src,left,right)
+
+wtMethod(l1, l2, ampl=0.5, offset=50) =>
+    esa = ta.ema(hlc3, l1)
+    ci = (hlc3 - esa) / (0.015 * ta.ema(math.abs(hlc3 - esa), l1))
+    wt1 = MaxMinNz(ta.ema(ci, l2)*ampl + offset)
+    wt2 = nz(ta.sma(wt1,3),50)
+    [wt1,wt2]
+
+distanceSMA(l,ampl,offset) =>
+    sma = ta.sma(source, l)
+    MaxMinNz( ((source - sma) / sma)* ampl + offset )
+
+williamsRangeMethod(length) =>
+	(source - ta.lowest(length)) / (ta.highest(length) - ta.lowest(length)) * 100
+	
+momentumMethod(length,ampl=100, offset=50) =>
+    MaxMinNz((source/source[length]-1)*ampl+offset)
+
+stochasticRsiMethod(rsi,rsiLength,smoothK,smoothD,offset=50) =>
+    k       = ta.sma(ta.stoch(rsi, rsi, rsi, rsiLength), smoothK)
+    d       = ta.sma(k, smoothD)
+    kdDelta = MaxMinNz((k - d) + offset)
+    [k,d,kdDelta]
+
+rviMethod(lengthStDev,lengthEma) =>
+    stddev  = ta.stdev(source,lengthStDev)
+    upper   = ta.ema(ta.change(source) <= 0 ? 0 : stddev, lengthEma)
+    lower   = ta.ema(ta.change(source) >  0 ? 0 : stddev, lengthEma)
+    rvi     = upper / (upper + lower) * 100
+
+double_smoothEMA(src, long, short) =>
+	ta.ema(ta.ema(src, long), short)
+
+tsiMethod(long, short, ampl=60, offset=50) =>
+    dsTSI   = double_smoothEMA(ta.change(source), long, short)
+    dsAbsTSI= double_smoothEMA(math.abs(ta.change(source)), long, short)
+    tsi     = MaxMinNz(ampl*(dsTSI/dsAbsTSI)+offset)
+
+bbMethod(length,mult) =>
+    [middle, upper, lower] = ta.bb(source,length,mult)
+    MaxMinNz( ((source - lower) / (upper - lower)) * 100 )
+
+stcMethod(length, fastLength, slowLength) =>
+    m       = ta.ema(source, fastLength) - ta.ema(source, slowLength)
+    Kstc    = nz(fixnan(ta.stoch(m, m, m, length)))
+    Dstc    = ta.ema(Kstc, 3)
+    KDstc   = nz(fixnan(ta.stoch(Dstc, Dstc, Dstc, 3)))
+    stc     = ta.ema(KDstc, 3)
+    stc     := math.max(math.min(stc, 100), 0)
+
+aroonMethod(lengthUp,lengthDown) =>
+    up      = (100 * (ta.highestbars(high, lengthUp+1)   + lengthUp)  /lengthUp  )
+    down    = (-100 * (ta.lowestbars(low  , lengthDown+1) + lengthDown)/lengthDown) + 100   //Down adjusted to match the 0 with the bottom and 100 with the top
+    [up,down]
+
+haCountMethod(length) =>
+    [haclose,haopen] = request.security(ticker.heikinashi(syminfo.tickerid), mtf, [close,open])
+    hac = 50.0
+    hac := if barstate.isfirst
+        50
+    else if haclose > haopen
+        hac[1] / length + (100 * ((length - 1)/length))
+    else if haclose < haopen
+        hac[1] / length
+    else
+        hac[1]
+    
+cmfMethod(length,ampl=150,offset=50) =>
+    mfv = math.sum(((high == low) ? 0 : ((close - low) - (high - close)) / (high - low)) * volume, length) / math.sum(volume, length)
+    MaxMinNz(mfv * ampl + offset)
+
+TDSMethod(length=4,maxTD=13) =>
+    TDSUp       = 0
+    TDSUp       := source > source[length] ? nz(TDSUp[1]  ) + 1 : 0
+    TDSDown     = 0
+    TDSDown     := source < source[length] ? nz(TDSDown[1]) - 1 : 0
+    [MaxMinNz((((TDSUp + TDSDown) / maxTD) + 1) * 50),TDSUp,TDSDown]
+    
+isInBullDivergence(indicator,price=close,length=100,confirm=true,confLength=1) =>
+    isDiv = 0
+    confirmOffset = confirm ? confLength : 0
+    LL = indicator[0+confirmOffset]
+    if (isPL(indicator,right=confirmOffset) and indicator < 50)
+        for i = 1+confirmOffset to length+confirmOffset
+    		if (LL > indicator[i] and indicator[i] < indicator[i+1])
+    		    LL := indicator[i]
+    		    if (price[i] > price[confirmOffset] and ta.lowestbars(price,i) < 3)
+    		        isDiv := i
+    isDiv

@@ -1,0 +1,115 @@
+//@version=5
+indicator("Parallel Bounding Trend Lines", overlay=true)
+
+// Input
+lookback = input.int(50, "Lookback Period", minval=2)
+
+// Function to calculate parallel bounding lines for a window
+f_calculateParallelBounds(_lookback) =>
+    // 1. Calculate Central Tendency Line (using close)
+    linregClose = ta.linreg(close, _lookback, 0)
+    linregClosePrev = ta.linreg(close, _lookback, 1)
+    commonSlope = linregClose - linregClosePrev
+    // Calculate intercept at the start of the window (lookback - 1 bars ago)
+    baseIntercept = linregClose - commonSlope * (_lookback - 1)
+
+    // 3 & 4. Calculate Deviations and Find Max Deviations
+    float maxPosDev = na
+    float maxNegDev = na
+
+    for i = 0 to _lookback - 1
+        // Central line value at relative index 'i'
+        centralLinePoint = baseIntercept + commonSlope * i
+
+        // High price at relative index 'i'
+        highPrice = high[_lookback - 1 - i]
+        if not na(highPrice) and not na(centralLinePoint)
+            posDeviation = highPrice - centralLinePoint
+            if na(maxPosDev) or posDeviation > maxPosDev
+                maxPosDev := posDeviation
+
+        // Low price at relative index 'i'
+        lowPrice = low[_lookback - 1 - i]
+        if not na(lowPrice) and not na(centralLinePoint)
+            negDeviation = lowPrice - centralLinePoint
+            if na(maxNegDev) or negDeviation < maxNegDev
+                maxNegDev := negDeviation
+
+    // Default deviations if na
+    actualMaxPosDev = na(maxPosDev) ? 0.0 : maxPosDev
+    actualMaxNegDev = na(maxNegDev) ? 0.0 : maxNegDev
+
+    // 5. Adjust Intercepts
+    upperAdjustedIntercept = baseIntercept + actualMaxPosDev
+    lowerAdjustedIntercept = baseIntercept + actualMaxNegDev
+
+    // Return the common slope and adjusted intercepts
+    [commonSlope, upperAdjustedIntercept, lowerAdjustedIntercept]
+
+
+// --- Main ---
+// Declare persistent line variables for drawing on last bar
+var line upperLine = na
+var line lowerLine = na
+
+// Initialize calculation results with na
+float slope = na
+float upperIntercept = na
+float lowerIntercept = na
+float currentUpperVal = na
+float currentLowerVal = na
+
+// Perform calculations on every bar after initial lookback
+if bar_index >= lookback // Need lookback bars for linreg offset 1
+    // Calculate bounds for the window ending at the *current* bar
+    [_slope, _upperIntercept, _lowerIntercept] = f_calculateParallelBounds(lookback)
+    slope := _slope
+    upperIntercept := _upperIntercept
+    lowerIntercept := _lowerIntercept
+
+    // Calculate the line values at the *current* bar (end of the window)
+    // Value at relative index (lookback - 1) is intercept + slope * (lookback - 1)
+    currentUpperVal := upperIntercept + slope * (lookback - 1)
+    currentLowerVal := lowerIntercept + slope * (lookback - 1)
+
+// Calculate break conditions on every bar using the current bar's line values
+breakUp = not na(currentUpperVal) and close > currentUpperVal[1]
+breakDown = not na(currentLowerVal) and close < currentLowerVal[1]
+
+// Plot markers for break up
+plotshape(breakUp,   style=shape.labelup,  location=location.abovebar, color=color.new(color.green, 0),  text="Break Up")
+
+// Plot markers for break down
+plotshape( breakDown,  style=shape.labeldown, location=location.belowbar, color=color.new(color.red, 0),  text="Break Down"   )
+
+// --- Debug Plots ---
+// Plot the calculated line values for every bar
+plot(currentUpperVal, title="Debug Upper Val", color=color.new(color.aqua, 50), style=plot.style_line)
+plot(currentLowerVal, title="Debug Lower Val", color=color.new(color.fuchsia, 50), style=plot.style_line)
+
+// Plot the breakout conditions in a separate pane
+plot(breakUp ? 1 : 0, title="BreakUp Condition", style=plot.style_histogram, color=color.green)
+plot(breakDown ? 1 : 0, title="BreakDown Condition", style=plot.style_histogram, color=color.red)
+// --- End Debug Plots ---
+
+// Only draw the lines visually on the last bar
+if barstate.islast and bar_index >= lookback
+    // Use the slope/intercepts calculated specifically for this last bar
+    x1 = bar_index - lookback + 1
+    x2 = bar_index
+
+    // y-coords for the line drawn on the last bar
+    y1_upper_draw = upperIntercept // Intercept is value at start (relative index 0)
+    y2_upper_draw = currentUpperVal  // Value at end (relative index lookback-1)
+    y1_lower_draw = lowerIntercept
+    y2_lower_draw = currentLowerVal
+
+    // Delete old visual lines
+    line.delete(upperLine[1])
+    line.delete(lowerLine[1])
+
+    // Draw new visual lines
+    upperLine := line.new(x1=x1, y1=y1_upper_draw, x2=x2, y2=y2_upper_draw, color=color.blue, style=line.style_solid)
+    lowerLine := line.new(x1=x1, y1=y1_lower_draw, x2=x2, y2=y2_lower_draw, color=color.red, style=line.style_solid)
+
+// --- End Main ---

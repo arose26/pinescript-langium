@@ -1,0 +1,8 @@
+//@version=5
+indicator("My Indicator", overlay=true)
+
+// Simple calculation
+var sma = ta.sma(close, 14)
+
+// Plot the result
+plot(sma, "SMA", color=color.blue)

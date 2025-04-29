@@ -4,6 +4,8 @@ grammar PineScript
 entry StartScript:
     (NEWLINE | COMMENT)* (statements=Statements)? NEWLINE*;
 
+// Version annotation is handled as a special comment
+
 // Statements
 Statements:
     statements+=Statement (NEWLINE+ statements+=Statement)* NEWLINE*;
@@ -225,10 +227,14 @@ SubscriptSlice:
 
 // Atomic expressions
 AtomicExpression infers Expression:
-    {infer NameReference} name=NameLoad |
+    {infer NameReference} name=QualifiedName |
     LiteralExpression |
     {infer GroupedExpression} LPAR expression=Expression RPAR |
     ArrayLiteral;
+
+// Qualified name for namespace support
+QualifiedName:
+    parts+=NameLoad ('.' parts+=NameLoad)*;
 
 // Array literal
 ArrayLiteral:
@@ -286,7 +292,7 @@ TypeQualifier returns string:
     'const' | 'input' | 'simple' | 'series';
 
 AttributedTypeName:
-    names+=NameLoad ('.' names+=NameLoad)*;
+    name=QualifiedName;
 
 TemplateSpecSuffix:
     '<' (arguments=TypeArgumentList)? '>';
@@ -315,7 +321,9 @@ terminal RSQB: ']';
 
 // Name with soft keywords
 Name returns string:
-    NAME | 'type' | 'method' | 'const' | 'input' | 'simple' | 'series';
+    NAME | 'type' | 'method' | 'const' | 'input' | 'simple' | 'series' |
+    // Built-in library namespaces
+    'ta' | 'math' | 'color' | 'str' | 'array' | 'map' | 'barstate' | 'request' | 'input';
 
 NameLoad returns string:
     Name;
@@ -327,3 +335,7 @@ NameStore returns string:
 hidden terminal WS: /[ \t]+/;
 terminal COMMENT: /\/\/[^\n\r]*/;
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
+
+// Version annotation - matches //@version=X
+// We'll handle this as a special comment for now
+// terminal VERSION_ANNOTATION: /\/\/@version=[0-9]+/;
