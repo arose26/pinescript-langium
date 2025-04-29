@@ -1,0 +1,7 @@
+// Array in a function test
+var numbers = [1, 2, 3, 4, 5]
+
+getFirstElement(arr) =>
+    arr[0]
+
+var first = getFirstElement(numbers)

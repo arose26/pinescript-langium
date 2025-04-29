@@ -10,36 +10,6 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
         
-        // Array methods and properties
-        Array.prototype.size = function() { return this.length; };
-        Array.prototype.push_back = function(value) { this.push(value); return this; };
-        Array.prototype.pop_back = function() { return this.pop(); };
-        Array.prototype.insert = function(index, value) { this.splice(index, 0, value); return this; };
-        Array.prototype.remove = function(index) { this.splice(index, 1); return this; };
-        Array.prototype.clear = function() { this.length = 0; return this; };
-        Array.prototype.fill = function(value, size) { 
-            this.length = 0;
-            for (let i = 0; i < size; i++) {
-                this.push(value);
-            }
-            return this;
-        };
-        Array.prototype.copy = function() { return [...this]; };
-        Array.prototype.slice = function(start, end) { return Array.prototype.slice.call(this, start, end); };
-        Array.prototype.sort = function() { return Array.prototype.sort.call(this); };
-        Array.prototype.reverse = function() { return Array.prototype.reverse.call(this); };
-        Array.prototype.join = function(separator) { return Array.prototype.join.call(this, separator); };
-        Array.prototype.indexOf = function(value) { return Array.prototype.indexOf.call(this, value); };
-        Array.prototype.includes = function(value) { return Array.prototype.includes.call(this, value); };
-        Array.prototype.forEach = function(callback) { return Array.prototype.forEach.call(this, callback); };
-        Array.prototype.map = function(callback) { return Array.prototype.map.call(this, callback); };
-        Array.prototype.filter = function(callback) { return Array.prototype.filter.call(this, callback); };
-        Array.prototype.reduce = function(callback, initialValue) { return Array.prototype.reduce.call(this, callback, initialValue); };
-        Array.prototype.some = function(callback) { return Array.prototype.some.call(this, callback); };
-        Array.prototype.every = function(callback) { return Array.prototype.every.call(this, callback); };
-        Array.prototype.find = function(callback) { return Array.prototype.find.call(this, callback); };
-        Array.prototype.findIndex = function(callback) { return Array.prototype.findIndex.call(this, callback); };
-        
         ${generateStatements(script)}
     `;
 
@@ -126,17 +96,6 @@ function generateStructure(structure: unknown): string {
             return `for (let ${iterator} = ${generateExpression(forStruct.start)}; ${iterator} <= ${generateExpression(forStruct.end)}; ${iterator} += ${forStruct.step ? generateExpression(forStruct.step) : '1'}) {
                 ${block}
             }`;
-        } else if (typedStructure.$type === 'ForStructureIn') {
-            const forStruct = structure as {
-                iterator: unknown,
-                collection: unknown,
-                block: { statements: unknown[] }
-            };
-            const iterator = generateForIterator(forStruct.iterator);
-            const block = forStruct.block.statements.map((s: any) => generateStatement(s)).join('\n');
-            return `for (const ${iterator} of ${generateExpression(forStruct.collection)}) {
-                ${block}
-            }`;
         } else if (typedStructure.$type === 'WhileStructure') {
             const whileStruct = structure as {
                 condition: unknown,
@@ -220,60 +179,6 @@ function generateExpression(expression: unknown): string {
             const subscriptExpr = expression as { expression: unknown, slice: { expressions: unknown[] } };
             const index = subscriptExpr.slice.expressions.map(expr => generateExpression(expr)).join(', ');
             return `${generateExpression(subscriptExpr.expression)}[${index}]`;
-        } else if (typedExpr.$type === 'PrimaryExpressionAttribute') {
-            const attrExpr = expression as { expression: unknown, attribute: string };
-            // Handle array methods and properties
-            const expr = generateExpression(attrExpr.expression);
-            const attr = attrExpr.attribute;
-            
-            // Map PineScript array methods to JavaScript
-            if (attr === 'size') {
-                return `${expr}.size()`;
-            } else if (attr === 'push_back') {
-                return `${expr}.push_back`;
-            } else if (attr === 'pop_back') {
-                return `${expr}.pop_back`;
-            } else if (attr === 'insert') {
-                return `${expr}.insert`;
-            } else if (attr === 'remove') {
-                return `${expr}.remove`;
-            } else if (attr === 'clear') {
-                return `${expr}.clear`;
-            } else if (attr === 'fill') {
-                return `${expr}.fill`;
-            } else if (attr === 'copy') {
-                return `${expr}.copy`;
-            } else if (attr === 'slice') {
-                return `${expr}.slice`;
-            } else if (attr === 'sort') {
-                return `${expr}.sort`;
-            } else if (attr === 'reverse') {
-                return `${expr}.reverse`;
-            } else if (attr === 'join') {
-                return `${expr}.join`;
-            } else if (attr === 'indexOf') {
-                return `${expr}.indexOf`;
-            } else if (attr === 'includes') {
-                return `${expr}.includes`;
-            } else if (attr === 'forEach') {
-                return `${expr}.forEach`;
-            } else if (attr === 'map') {
-                return `${expr}.map`;
-            } else if (attr === 'filter') {
-                return `${expr}.filter`;
-            } else if (attr === 'reduce') {
-                return `${expr}.reduce`;
-            } else if (attr === 'some') {
-                return `${expr}.some`;
-            } else if (attr === 'every') {
-                return `${expr}.every`;
-            } else if (attr === 'find') {
-                return `${expr}.find`;
-            } else if (attr === 'findIndex') {
-                return `${expr}.findIndex`;
-            } else {
-                return `${expr}.${attr}`;
-            }
         } else if (typedExpr.$type === 'InequalityExpressionRule') {
             const ineqExpr = expression as { left: unknown, pairs: { $type: string, right: unknown }[] };
             if (ineqExpr.pairs.length === 1) {

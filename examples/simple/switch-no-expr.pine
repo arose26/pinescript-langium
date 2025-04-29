@@ -1,0 +1,3 @@
+// Switch without expression
+switch
+    1 => var x = 10

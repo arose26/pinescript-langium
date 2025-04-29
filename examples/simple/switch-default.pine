@@ -1,0 +1,3 @@
+// Switch with default case
+switch 2
+    => var x = 0

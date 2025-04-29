@@ -1,93 +1,91 @@
-# PineScript Langium Grammar
+# PineScript Langium
 
-This project contains a Langium grammar for PineScript, converted from the original ANTLR4 grammar.
+A Langium-based parser for PineScript.
 
 ## Overview
 
-PineScript is a domain-specific language used for creating custom indicators and strategies in TradingView. This project aims to provide a Langium-based grammar for PineScript, which can be used for:
-
-- Syntax highlighting
-- Code completion
-- Error checking
-- Language server protocol (LSP) integration
+This project aims to provide a Langium-based parser for PineScript, the scripting language used in TradingView.
 
 ## Features
 
-- Full PineScript grammar in Langium format
-- Support for Python-style indentation
-- Custom token handling for INDENT and DEDENT tokens
-- Error recovery for indentation errors
+- Indentation-aware parsing
+- Support for PineScript syntax
+- JavaScript code generation
+- Array support (experimental)
 
-## Project Structure
+## Known Issues
 
+### Less Than Operator
+
+There is a known issue with the less than operator (`<`) in the parser. As a workaround, you can use one of the following alternatives:
+
+1. Reverse the comparison: `5 > x` instead of `x < 5`
+2. Use logical negation: `not (x >= 5)` instead of `x < 5`
+
+### Array Support
+
+Array support is currently experimental. The parser can generate JavaScript code for arrays, but there are still issues with parsing array literals in some contexts.
+
+## Examples
+
+```pine
+// Function declaration
+add(a, b) =>
+    a + b
+
+// Variable declaration
+var x = 5
+var y = 10
+
+// Function call
+var sum = add(x, y)
+
+// While loop with greater than
+var counter = 10
+while counter > 0
+    counter := counter - 1
+
+// While loop with less than (workaround)
+var i = 0
+while 5 > i
+    i := i + 1
+
+// If statement
+if sum > 20
+    sum := 20
+else
+    sum := sum + 5
+
+// Array example (experimental)
+var emptyArray = []
+var numbers = [1, 2, 3, 4, 5]
+var mixed = [1, "hello", true]
+
+// Array access
+var firstNumber = numbers[0]
+
+// Array modification
+numbers[0] := 10
 ```
-pinescript-langium/
-├── src/
-│   ├── language-server/
-│   │   ├── pinescript.langium       # Main grammar file
-│   │   ├── pinescript-module.ts     # Module configuration
-│   │   ├── token-builder.ts         # Custom token builder for indentation
-│   │   └── generated/               # Generated files
-│   └── main.ts                      # Test entry point
-├── examples/                        # Example PineScript files
-├── langium-config.json              # Langium configuration
-└── package.json                     # Project dependencies
+
+## Development
+
+### Building
+
+```bash
+npm run build
 ```
 
-## Getting Started
+### Running Tests
 
-### Prerequisites
-
-- Node.js (v14 or later)
-- npm (v6 or later)
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Generate the Langium grammar:
-   ```
-   npm run langium:generate
-   ```
-4. Build the project:
-   ```
-   npm run build
-   ```
-
-### Usage
-
-To test the grammar with an example PineScript file:
-
-```
-node out/main.js examples/simple.pine
+```bash
+node test-simple.js
 ```
 
-## Indentation Handling
+## Roadmap
 
-PineScript uses Python-style indentation to define code blocks. This is handled by a custom lexer implementation that:
-
-1. Tracks indentation levels using a stack
-2. Inserts INDENT and DEDENT tokens based on indentation changes
-3. Handles special cases like newlines in parentheses, after operators, etc.
-4. Validates that indentation is a multiple of 4 spaces
-
-## Conversion from ANTLR4
-
-The grammar was converted from the original ANTLR4 grammar found in the PineScript project. The conversion process involved:
-
-1. Converting lexer rules to Langium terminal rules
-2. Converting parser rules to Langium grammar rules
-3. Implementing custom indentation handling
-4. Adapting the grammar to Langium's syntax and semantics
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- The original PineScript ANTLR4 grammar
-- The Langium project for providing the grammar framework
+- Fix issues with the less than operator
+- Improve array support
+- Add support for more advanced language features
+- Improve error recovery and error messages
+- Add comprehensive testing with a wider variety of PineScript code

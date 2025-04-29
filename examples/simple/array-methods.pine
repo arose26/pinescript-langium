@@ -1,0 +1,71 @@
+// Array methods and properties example
+var emptyArray = []
+var numbers = [1, 2, 3, 4, 5]
+var mixed = [1, "hello", true]
+
+// Array size
+var size = numbers.size
+
+// Array push_back
+numbers.push_back(6)
+
+// Array pop_back
+var lastElement = numbers.pop_back()
+
+// Array insert
+numbers.insert(0, 0)
+
+// Array remove
+numbers.remove(0)
+
+// Array clear
+var tempArray = numbers.copy()
+tempArray.clear()
+
+// Array fill
+var filledArray = []
+filledArray.fill(0, 10)
+
+// Array slice
+var slicedArray = numbers.slice(1, 3)
+
+// Array sort
+var sortedArray = numbers.copy()
+sortedArray.sort()
+
+// Array reverse
+var reversedArray = numbers.copy()
+reversedArray.reverse()
+
+// Array join
+var joinedArray = numbers.join(", ")
+
+// Array indexOf
+var index = numbers.indexOf(3)
+
+// Array includes
+var hasElement = numbers.includes(3)
+
+// Array forEach
+numbers.forEach(n => n * 2)
+
+// Array map
+var doubledNumbers = numbers.map(n => n * 2)
+
+// Array filter
+var evenNumbers = numbers.filter(n => n % 2 == 0)
+
+// Array reduce
+var sum = numbers.reduce((acc, n) => acc + n, 0)
+
+// Array some
+var hasEven = numbers.some(n => n % 2 == 0)
+
+// Array every
+var allEven = numbers.every(n => n % 2 == 0)
+
+// Array find
+var foundNumber = numbers.find(n => n > 3)
+
+// Array findIndex
+var foundIndex = numbers.findIndex(n => n > 3)

@@ -1,0 +1,8 @@
+// Simple switch statement
+var x = 2
+
+switch x
+    1 => x := 10
+    2 => x := 20
+    3 => x := 30
+    => x := 0  // default case

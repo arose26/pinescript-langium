@@ -232,7 +232,7 @@ AtomicExpression infers Expression:
 
 // Array literal
 ArrayLiteral:
-    {infer ArrayExpression} LSQB (elements+=Expression (',' elements+=Expression)* ','?)? RSQB;
+    {infer ArrayExpression} '[' (elements+=Expression (',' elements+=Expression)* ','?)? ']';
 
 LiteralExpression infers Expression:
     {infer LiteralNumber} value=NUMBER |

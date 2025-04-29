@@ -231,7 +231,7 @@ AtomicExpression infers Expression:
     ArrayLiteral;
 
 // Array literal
-ArrayLiteral:
+ArrayLiteral infers Expression:
     {infer ArrayExpression} LSQB (elements+=Expression (',' elements+=Expression)* ','?)? RSQB;
 
 LiteralExpression infers Expression:

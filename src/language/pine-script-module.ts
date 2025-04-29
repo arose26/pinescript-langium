@@ -2,7 +2,8 @@ import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { PineScriptGeneratedModule, PineScriptGeneratedSharedModule } from './generated/module.js';
 import { PineScriptValidator, registerValidationChecks } from './pine-script-validator.js';
-import { IndentationAwareTokenBuilder, IndentationAwareLexer } from 'langium';
+import { IndentationAwareLexer } from 'langium';
+import { PineScriptTokenBuilder } from './pine-script-token-builder.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -29,12 +30,7 @@ export const PineScriptModule: Module<PineScriptServices, PartialLangiumServices
         PineScriptValidator: () => new PineScriptValidator()
     },
     parser: {
-        TokenBuilder: () => new IndentationAwareTokenBuilder({
-            ignoreIndentationDelimiters: [
-                ['LPAR', 'RPAR'],
-                ['LSQB', 'RSQB']
-            ]
-        }),
+        TokenBuilder: () => new PineScriptTokenBuilder(),
         Lexer: (services) => new IndentationAwareLexer(services)
     }
 };

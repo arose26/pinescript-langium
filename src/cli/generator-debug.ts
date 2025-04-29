@@ -7,6 +7,17 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.js`;
 
+    console.log(`Generating JavaScript for ${filePath}`);
+    console.log(`Output file: ${generatedFilePath}`);
+    console.log(`Script AST type: ${script.$type}`);
+    
+    if (!script.statements) {
+        console.log('No statements found in the script');
+        return generatedFilePath;
+    }
+    
+    console.log(`Number of statements: ${script.statements.statements.length}`);
+    
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
         
@@ -43,8 +54,11 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         ${generateStatements(script)}
     `;
 
+    console.log(`Creating directory: ${data.destination}`);
     fs.mkdirSync(data.destination, { recursive: true });
+    console.log(`Writing file: ${generatedFilePath}`);
     fs.writeFileSync(generatedFilePath, fileContent);
+    console.log(`File written successfully: ${generatedFilePath}`);
     return generatedFilePath;
 }
 

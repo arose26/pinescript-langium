@@ -1,0 +1,11 @@
+// Simple array methods test
+var numbers = [1, 2, 3, 4, 5]
+
+// Array size
+var size = numbers.size
+
+// Array push_back
+numbers.push_back(6)
+
+// Array copy
+var copy = numbers.copy()

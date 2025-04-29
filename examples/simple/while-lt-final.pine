@@ -1,0 +1,4 @@
+// Final working example with less than
+var x = 0
+while 5 > x
+    x := x + 1

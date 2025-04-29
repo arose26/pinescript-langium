@@ -1,96 +1,77 @@
-import { NodeFileSystem } from 'langium/node';
 import { createPineScriptServices } from './out/language/pine-script-module.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import { URI } from 'langium';
+import { NodeFileSystem } from 'langium/node';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
-async function main() {
-    // Create language services
-    const services = createPineScriptServices(NodeFileSystem).PineScript;
-    const lexer = services.parser.Lexer;
-    const documentBuilder = services.shared.workspace.DocumentBuilder;
-    
-    // Read the test file
-    const filePath = path.resolve('./examples/if-else.pine');
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    
-    // Parse the file
-    console.log('Parsing file:', filePath);
-    console.log('File content:');
-    console.log('-------------');
-    console.log(fileContent);
-    console.log('-------------');
-    
-    // Tokenize the input
-    console.log('\nTokens:');
-    const tokens = lexer.tokenize(fileContent);
-    tokens.tokens.forEach((token, index) => {
-        console.log(`${index}: ${token.tokenType.name} - '${token.image}'`);
-    });
-    
-    // Parse the document
-    console.log('\nParsing document:');
-    const uri = URI.file(filePath).toString();
-    const document = services.shared.workspace.LangiumDocumentFactory.fromString(fileContent, uri);
-    
-    // Build the document
-    await documentBuilder.build([document], { validationChecks: 'all' });
-    
-    // Check for errors
-    const parseResult = document.parseResult;
-    
-    if (parseResult.lexerErrors.length > 0) {
-        console.error('Lexer errors:');
-        parseResult.lexerErrors.forEach(error => console.error(error.message));
-    }
-    
-    if (parseResult.parserErrors.length > 0) {
-        console.error('Parser errors:');
-        parseResult.parserErrors.forEach(error => console.error(error.message));
-    }
-    
-    if (parseResult.lexerErrors.length === 0 && parseResult.parserErrors.length === 0) {
-        console.log('Parsing successful!');
-        console.log('AST root type:', parseResult.value.$type);
-        console.log('Number of statements:', parseResult.value.statements?.statements?.length || 0);
+// Helper function to handle circular references in JSON.stringify
+function getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+                return '[Circular]';
+            }
+            seen.add(value);
+        }
         
-        // Print the AST structure
-        console.log('\nAST Structure:');
-        printASTStructure(parseResult.value, 0);
-    }
+        // Skip internal properties
+        if (key.startsWith('$')) {
+            return undefined;
+        }
+        
+        return value;
+    };
 }
 
-function printASTStructure(node, indent) {
-    const indentStr = '  '.repeat(indent);
+async function main() {
+    // Get the file path from command line arguments
+    const filePath = process.argv[2];
+    if (!filePath) {
+        console.error('Please provide a file path');
+        process.exit(1);
+    }
+
+    // Create the language services
+    const services = createPineScriptServices(NodeFileSystem).PineScript;
+    const parser = services.parser;
+    const lexer = parser.LangiumParser.lexer;
+
+    // Read the file content
+    const content = fs.readFileSync(filePath, 'utf-8');
     
-    if (!node) {
-        console.log(`${indentStr}null`);
-        return;
+    // Tokenize the content
+    console.log('Tokenizing...');
+    const tokens = lexer.tokenize(content);
+    console.log(`Found ${tokens.tokens.length} tokens`);
+    
+    // Print the first 20 tokens
+    console.log('First 20 tokens:');
+    for (let i = 0; i < Math.min(20, tokens.tokens.length); i++) {
+        const token = tokens.tokens[i];
+        console.log(`Token ${i}: ${token.image} (${token.tokenType.name})`);
     }
     
-    console.log(`${indentStr}${node.$type}`);
+    // Parse the content
+    console.log('\nParsing...');
+    const result = await services.parser.LangiumParser.parse(content);
     
-    for (const key in node) {
-        if (key.startsWith('$')) continue;
-        
-        const value = node[key];
-        
-        if (Array.isArray(value)) {
-            console.log(`${indentStr}  ${key}: [Array with ${value.length} items]`);
-            value.forEach(item => {
-                if (item && typeof item === 'object' && item.$type) {
-                    printASTStructure(item, indent + 2);
-                } else {
-                    console.log(`${indentStr}    ${item}`);
-                }
-            });
-        } else if (value && typeof value === 'object' && value.$type) {
-            console.log(`${indentStr}  ${key}:`);
-            printASTStructure(value, indent + 2);
-        } else {
-            console.log(`${indentStr}  ${key}: ${value}`);
+    if (result.lexerErrors.length > 0 || result.parserErrors.length > 0) {
+        console.log('Lexer errors:');
+        for (const error of result.lexerErrors) {
+            console.log(`- ${error.message}`);
         }
+        
+        console.log('Parser errors:');
+        for (const error of result.parserErrors) {
+            console.log(`- ${error.message}`);
+        }
+    } else {
+        console.log('Parsing successful!');
     }
+    
+    // Print the AST
+    console.log('\nAST:');
+    console.log(JSON.stringify(result.value, getCircularReplacer(), 2));
 }
 
 main().catch(error => {

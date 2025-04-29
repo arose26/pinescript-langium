@@ -1,0 +1,5 @@
+// Simple switch statement
+var x = 2
+
+switch x
+    1 => x := 10

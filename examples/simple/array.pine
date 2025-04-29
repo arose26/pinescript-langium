@@ -1,0 +1,17 @@
+// Array example
+var emptyArray = []
+var numbers = [1, 2, 3, 4, 5]
+var mixed = [1, "hello", true]
+
+// Array access
+var firstNumber = numbers[0]
+var secondNumber = numbers[1]
+
+// Array modification
+numbers[0] := 10
+
+// Array in a function
+getFirstElement(arr) =>
+    arr[0]
+
+var first = getFirstElement(numbers)

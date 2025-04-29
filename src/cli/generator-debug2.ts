@@ -4,9 +4,22 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export function generateJavaScript(script: StartScript, filePath: string, destination: string | undefined): string {
-    const data = extractDestinationAndName(filePath, destination);
+    // Force the destination to be 'debug-output'
+    const forcedDestination = 'debug-output';
+    const data = extractDestinationAndName(filePath, forcedDestination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.js`;
 
+    console.log(`Generating JavaScript for ${filePath}`);
+    console.log(`Output file: ${generatedFilePath}`);
+    console.log(`Script AST type: ${script.$type}`);
+    
+    if (!script.statements) {
+        console.log('No statements found in the script');
+        return generatedFilePath;
+    }
+    
+    console.log(`Number of statements: ${script.statements.statements.length}`);
+    
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
         
@@ -43,8 +56,11 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         ${generateStatements(script)}
     `;
 
+    console.log(`Creating directory: ${data.destination}`);
     fs.mkdirSync(data.destination, { recursive: true });
+    console.log(`Writing file: ${generatedFilePath}`);
     fs.writeFileSync(generatedFilePath, fileContent);
+    console.log(`File written successfully: ${generatedFilePath}`);
     return generatedFilePath;
 }
 
@@ -54,6 +70,7 @@ function generateStatements(script: StartScript): string {
     }
     
     return script.statements.statements.map(statement => {
+        console.log(`Processing statement of type: ${statement.$type}`);
         if (statement.$type === 'FunctionDeclaration') {
             const params = statement.parameters?.parameters.map((p: any) => p.name).join(', ') || '';
             const body = statement.body.$type === 'IndentedLocalBlock' 
@@ -78,6 +95,7 @@ function generateStatements(script: StartScript): string {
 function generateStatement(statement: unknown): string {
     if (typeof statement === 'object' && statement !== null) {
         const typedStatement = statement as { $type: string };
+        console.log(`Processing inner statement of type: ${typedStatement.$type}`);
         if (typedStatement.$type === 'SimpleNameInitialization') {
             const init = statement as { declaration: { name: string }, expression: unknown };
             return `let ${init.declaration.name} = ${generateExpression(init.expression)};`;
@@ -98,6 +116,7 @@ function generateStatement(statement: unknown): string {
 function generateStructure(structure: unknown): string {
     if (typeof structure === 'object' && structure !== null) {
         const typedStructure = structure as { $type: string };
+        console.log(`Processing structure of type: ${typedStructure.$type}`);
         if (typedStructure.$type === 'IfStructureElse') {
             const ifStruct = structure as { 
                 condition: unknown, 
@@ -164,6 +183,7 @@ function generateForIterator(iterator: unknown): string {
 function generateAssignmentTarget(target: unknown): string {
     if (typeof target === 'object' && target !== null) {
         const typedTarget = target as { $type: string };
+        console.log(`Processing assignment target of type: ${typedTarget.$type}`);
         if (typedTarget.$type === 'AssignmentTargetName') {
             return (target as { name: string }).name;
         } else if (typedTarget.$type === 'AssignmentTargetAttribute') {
@@ -183,6 +203,7 @@ function generateAssignmentTarget(target: unknown): string {
 function generateExpression(expression: unknown): string {
     if (typeof expression === 'object' && expression !== null) {
         const typedExpr = expression as { $type: string };
+        console.log(`Processing expression of type: ${typedExpr.$type}`);
         if (typedExpr.$type === 'LiteralNumber') {
             return (expression as { value: number }).value.toString();
         } else if (typedExpr.$type === 'LiteralString') {
@@ -204,6 +225,7 @@ function generateExpression(expression: unknown): string {
             return `(${generateExpression(groupExpr.expression)})`;
         } else if (typedExpr.$type === 'ArrayExpression') {
             const arrayExpr = expression as { elements?: unknown[] };
+            console.log(`Array expression with ${arrayExpr.elements?.length || 0} elements`);
             if (!arrayExpr.elements || arrayExpr.elements.length === 0) {
                 return '[]';
             }

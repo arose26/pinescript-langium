@@ -228,10 +228,6 @@ AtomicExpression infers Expression:
     {infer NameReference} name=NameLoad |
     LiteralExpression |
     {infer GroupedExpression} LPAR expression=Expression RPAR |
-    ArrayLiteral;
-
-// Array literal
-ArrayLiteral:
     {infer ArrayExpression} LSQB (elements+=Expression (',' elements+=Expression)* ','?)? RSQB;
 
 LiteralExpression infers Expression:
