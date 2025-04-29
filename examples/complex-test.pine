@@ -1,0 +1,65 @@
+// Complex PineScript test file
+
+// Variable declarations
+var x = 10
+var y = 20
+var z = x + y
+var str = "Hello, world!"
+var color = #FF0000
+
+// Function declaration
+method calculateMA(price, length)
+    var sum = 0
+    for i = 0 to length - 1
+        sum := sum + price[i]
+    sum / length
+
+// If-else structure
+if x > y
+    var diff = x - y
+    if diff > 5
+        z := z + 10
+    else
+        z := z - 5
+else
+    z := x * y
+    if z > 100
+        z := 100
+
+// For loop
+for i = 0 to 10
+    var value = i * 2
+    if value > 15
+        break
+    value := value + 1
+
+// Switch statement
+switch
+    x > 20 => var a = 1
+    x < 5 =>
+        var b = 2
+        var c = 3
+    => var d = 4  // default case
+
+// Nested structures
+if x > 0
+    if y > 0
+        if z > 0
+            var positive = true
+        else
+            var positive = false
+    else
+        var positive = false
+else
+    var positive = false
+
+// Function call
+var ma = calculateMA(close, 20)
+
+// Complex expression
+var complex = (x + y) * (z - 5) / 2
+
+// Line continuation with indentation
+var multiline = (1 + 2 +
+    3 + 4 +
+    5 + 6)

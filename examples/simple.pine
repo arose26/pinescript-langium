@@ -1,0 +1,28 @@
+// Simple PineScript example
+
+// Variable declarations
+var x = 10
+var y = 20
+var result = 0
+
+// Function declaration
+method calculate(a, b) =>
+    var sum = a + b
+    var diff = a - b
+    [sum, diff]
+
+// Conditional statement
+if x > y
+    result := x
+else
+    result := y
+
+// Loop
+for i = 1 to 10
+    result := result + i
+
+// Switch statement
+switch
+    x > 10 => result := result * 2
+    x < 5 => result := result / 2
+    => result := result + 1  // default case

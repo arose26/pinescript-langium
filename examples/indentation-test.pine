@@ -1,0 +1,43 @@
+// Test file for indentation preprocessing
+
+// Simple if statement with indentation
+if true
+    var x = 1
+    var y = 2
+    if x > 0
+        y = 3
+    else
+        y = 4
+
+// Function declaration with indentation
+method myFunction() =>
+    var a = 1
+    var b = 2
+    a + b
+
+// For loop with indentation
+for i = 0 to 10
+    var value = i * 2
+    if value > 10
+        break
+
+// Multiline string test
+var str = "This is a multiline string
+           with indentation that should be
+           processed correctly"
+
+// Test for parentheses and operators
+var z = (1 + 2 +
+         3 + 4)
+
+var w = 1 +
+        2 +
+        3
+
+// Switch statement
+switch
+    1 => var a = 1
+    2 =>
+        var b = 2
+        var c = 3
+    => var d = 4  // default case
