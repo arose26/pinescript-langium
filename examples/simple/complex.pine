@@ -1,0 +1,21 @@
+// A more complex example combining multiple features
+add(a, b) =>
+    a + b
+
+factorial(n) =>
+    if n <= 1
+        1
+    else
+        n * factorial(n - 1)
+
+var x = 5
+var result = factorial(x)
+
+var sum = 0
+for i = 1 to x
+    sum := sum + add(i, i)
+
+if sum > 20
+    sum := 20
+else
+    sum := sum + 5

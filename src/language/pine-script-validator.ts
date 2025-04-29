@@ -1,5 +1,5 @@
-import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import type { PineScriptAstType, FunctionDeclaration, VariableDeclaration } from './generated/ast.js';
+import { ValidationAcceptor, ValidationChecks } from 'langium';
+import { PineScriptAstType, SimpleNameInitialization, FunctionDeclaration, NameReference } from './generated/ast.js';
 import type { PineScriptServices } from './pine-script-module.js';
 
 /**
@@ -9,8 +9,9 @@ export function registerValidationChecks(services: PineScriptServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PineScriptValidator;
     const checks: ValidationChecks<PineScriptAstType> = {
-        FunctionDeclaration: validator.checkFunctionDeclaration,
-        VariableDeclaration: validator.checkVariableDeclaration
+        SimpleNameInitialization: validator.checkVariableNaming,
+        FunctionDeclaration: validator.checkFunctionNaming,
+        NameReference: validator.checkNameReference
     };
     registry.register(checks, validator);
 }
@@ -20,21 +21,25 @@ export function registerValidationChecks(services: PineScriptServices) {
  */
 export class PineScriptValidator {
 
-    checkFunctionDeclaration(func: FunctionDeclaration, accept: ValidationAcceptor): void {
-        if (func.name) {
-            const firstChar = func.name.substring(0, 1);
-            if (firstChar.toLowerCase() !== firstChar) {
-                accept('warning', 'Function names should start with a lowercase letter.', { node: func, property: 'name' });
-            }
+    checkVariableNaming(variable: SimpleNameInitialization, accept: ValidationAcceptor): void {
+        if (variable.declaration.name.length === 0) {
+            accept('error', 'Variable name must not be empty.', { node: variable.declaration, property: 'name' });
+        } else if (!variable.declaration.name.match(/^[a-z][a-zA-Z0-9_]*$/)) {
+            accept('warning', 'Variable name should start with a lowercase letter and contain only letters, numbers, and underscores.', { node: variable.declaration, property: 'name' });
         }
     }
 
-    checkVariableDeclaration(variable: VariableDeclaration, accept: ValidationAcceptor): void {
-        if (variable.name) {
-            const firstChar = variable.name.substring(0, 1);
-            if (firstChar.toLowerCase() !== firstChar) {
-                accept('warning', 'Variable names should start with a lowercase letter.', { node: variable, property: 'name' });
-            }
+    checkFunctionNaming(func: FunctionDeclaration, accept: ValidationAcceptor): void {
+        if (func.name.length === 0) {
+            accept('error', 'Function name must not be empty.', { node: func, property: 'name' });
+        } else if (!func.name.match(/^[a-z][a-zA-Z0-9_]*$/)) {
+            accept('warning', 'Function name should start with a lowercase letter and contain only letters, numbers, and underscores.', { node: func, property: 'name' });
+        }
+    }
+
+    checkNameReference(ref: NameReference, accept: ValidationAcceptor): void {
+        if (ref.name.length === 0) {
+            accept('error', 'Reference name must not be empty.', { node: ref, property: 'name' });
         }
     }
 

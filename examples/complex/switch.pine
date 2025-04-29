@@ -1,0 +1,15 @@
+// Switch statement
+var x = 3
+var result = 0
+
+switch
+    x == 1 => result := 10
+    x == 2 => result := 20
+    x == 3 => 
+        result := 30
+        if result > 25
+            result := result + 5
+    => 
+        result := 0
+        if x > 0
+            result := x

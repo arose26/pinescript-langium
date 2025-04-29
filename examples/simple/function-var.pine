@@ -1,0 +1,5 @@
+// Function and variable
+add(a, b) =>
+    a + b
+
+var x = 5

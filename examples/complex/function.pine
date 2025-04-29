@@ -1,0 +1,13 @@
+// Function declaration with nested structures
+calculateSum(a, b) =>
+    var result = a + b
+    if result > 10
+        result := result * 2
+    else
+        for i = 1 to 5
+            result := result + i
+    result
+
+var x = 5
+var y = 7
+var sum = calculateSum(x, y)

@@ -1,0 +1,7 @@
+// Simple function declaration
+add(a, b) =>
+    a + b
+
+var x = 5
+var y = 10
+var sum = add(x, y)

@@ -1,0 +1,3 @@
+// Very simple function declaration
+add(a, b) =>
+    a + b

@@ -2,18 +2,18 @@ grammar PineScript
 
 // Entry point
 entry StartScript:
-    (NEWLINE | COMMENT)* statements=Statements? NEWLINE*;
+    (NEWLINE | COMMENT)* (statements=Statements)? NEWLINE*;
 
 // Statements
 Statements:
     statements+=Statement+;
 
 Statement:
-    CompoundStatement | SimpleStatement;
+    FunctionDeclaration | CompoundStatement | SimpleStatement;
 
 // Compound statements
 CompoundStatement:
-    CompoundAssignment | FunctionDeclaration | TypeDeclaration | StructureStatement;
+    CompoundAssignment | TypeDeclaration | StructureStatement;
 
 // Simple statements
 SimpleStatement:
@@ -40,7 +40,7 @@ CompoundAugAssignment:
 
 // Function declaration
 FunctionDeclaration:
-    export?='export'? method?='method'? name=Name '(' (parameters=ParameterList)? ')' '=>' body=LocalBlock;
+    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR '=>' body=LocalBlock;
 
 ParameterList:
     parameters+=ParameterDefinition (',' parameters+=ParameterDefinition)* ','?;
@@ -211,8 +211,8 @@ UnaryExpression infers Expression:
 // Primary expressions
 PrimaryExpression infers Expression:
     AtomicExpression ({infer PrimaryExpressionAttribute.expression=current} '.' attribute=NameLoad |
-                      {infer PrimaryExpressionCall.expression=current} (templateSpec=TemplateSpecSuffix)? '(' (arguments=ArgumentList)? ')' |
-                      {infer PrimaryExpressionSubscript.expression=current} '[' slice=SubscriptSlice ']')*;
+                      {infer PrimaryExpressionCall.expression=current} (templateSpec=TemplateSpecSuffix)? LPAR (arguments=ArgumentList)? RPAR |
+                      {infer PrimaryExpressionSubscript.expression=current} LSQB slice=SubscriptSlice RSQB)*;
 
 ArgumentList:
     arguments+=ArgumentDefinition (',' arguments+=ArgumentDefinition)* ','?;
@@ -227,8 +227,8 @@ SubscriptSlice:
 AtomicExpression infers Expression:
     {infer NameReference} name=NameLoad |
     LiteralExpression |
-    {infer GroupedExpression} '(' expression=Expression ')' |
-    {infer TupleExpression} '[' expressions+=Expression (',' expressions+=Expression)* ','? ']';
+    {infer GroupedExpression} LPAR expression=Expression RPAR |
+    {infer TupleExpression} LSQB expressions+=Expression (',' expressions+=Expression)* ','? RSQB;
 
 LiteralExpression infers Expression:
     {infer LiteralNumber} value=NUMBER |
@@ -252,7 +252,7 @@ VariableDeclaration:
     (mode=DeclarationMode)? (type=TypeSpecification)? name=NameStore;
 
 TupleDeclaration:
-    '[' names+=NameStore (',' names+=NameStore)* ','? ']';
+    LSQB names+=NameStore (',' names+=NameStore)* ','? RSQB;
 
 DeclarationMode returns string:
     'varip' | 'var';
@@ -263,13 +263,13 @@ AssignmentTarget:
 AssignmentTargetSimple:
     (AssignmentTargetName |
      {infer AssignmentTargetAttribute} expression=PrimaryExpression '.' name=NameStore |
-     {infer AssignmentTargetSubscript} expression=PrimaryExpression '[' slice=SubscriptSlice ']');
+     {infer AssignmentTargetSubscript} expression=PrimaryExpression LSQB slice=SubscriptSlice RSQB);
 
 AssignmentTargetName:
     {infer AssignmentTargetName} name=NameStore;
 
 AssignmentTargetGroup:
-    {infer AssignmentTargetGroup} '(' target=AssignmentTarget ')';
+    {infer AssignmentTargetGroup} LPAR target=AssignmentTarget RPAR;
 
 AugAssignOp returns string:
     '*=' | '/=' | '%=' | '+=' | '-=';
@@ -304,10 +304,10 @@ terminal COLOR: /#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8}/;
 
 // Parentheses and brackets - used for indentation handling
 // These are referenced in the IndentationAwareTokenBuilder configuration
-hidden terminal LPAR: '(';
-hidden terminal RPAR: ')';
-hidden terminal LSQB: '[';
-hidden terminal RSQB: ']';
+terminal LPAR: '(';
+terminal RPAR: ')';
+terminal LSQB: '[';
+terminal RSQB: ']';
 
 // Name with soft keywords
 Name returns string:
