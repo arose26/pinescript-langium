@@ -1,22 +1,81 @@
 {
     "name": "pinescript-langium",
-    "version": "0.1.0",
-    "description": "PineScript grammar in Langium format",
-    "main": "out/extension.js",
+    "description": "Please enter a brief description here",
+    "version": "0.0.1",
+    "files": [
+        "bin",
+        "out",
+        "src"
+    ],
+    "type": "module",
     "scripts": {
+        "build": "tsc -b tsconfig.json && node esbuild.mjs",
+        "watch": "concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\"",
+        "lint": "eslint src --ext ts",
         "langium:generate": "langium generate",
+        "langium:generate:production": "langium generate --mode=production",
         "langium:watch": "langium generate --watch",
-        "build": "tsc -b tsconfig.json",
-        "watch": "tsc -b tsconfig.json --watch"
+        "vscode:prepublish": "npm run build && npm run lint"
     },
     "dependencies": {
-        "chevrotain": "^9.1.0",
-        "langium": "^1.0.0",
-        "vscode-languageserver": "^8.0.2",
-        "vscode-uri": "^3.0.2"
+        "chalk": "~5.3.0",
+        "chevrotain": "^11.0.3",
+        "commander": "~11.0.0",
+        "langium": "~3.5.0",
+        "vscode-languageclient": "~9.0.1",
+        "vscode-languageserver": "~9.0.1",
+        "vscode-uri": "^3.1.0"
     },
     "devDependencies": {
-        "langium-cli": "^1.0.0",
-        "typescript": "^4.9.4"
+        "@types/node": "^18.0.0",
+        "@types/vscode": "~1.67.0",
+        "@typescript-eslint/eslint-plugin": "~7.3.1",
+        "@typescript-eslint/parser": "~7.3.1",
+        "concurrently": "~8.2.1",
+        "esbuild": "~0.20.2",
+        "eslint": "~8.57.0",
+        "langium-cli": "~3.5.0",
+        "typescript": "~5.1.6"
+    },
+    "volta": {
+        "node": "18.19.1",
+        "npm": "10.2.4"
+    },
+    "displayName": "pinescript-langium",
+    "engines": {
+        "vscode": "^1.67.0",
+        "node": ">=18.0.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "pine-script",
+                "aliases": [
+                    "PineScript",
+                    "pine-script"
+                ],
+                "extensions": [
+                    ".pine"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "pine-script",
+                "scopeName": "source.pine-script",
+                "path": "syntaxes/pine-script.tmLanguage.json"
+            }
+        ]
+    },
+    "activationEvents": [
+        "onLanguage:pine-script"
+    ],
+    "main": "./out/extension/main.cjs",
+    "bin": {
+        "pine-script-cli": "./bin/cli.js"
     }
 }

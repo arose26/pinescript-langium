@@ -37,6 +37,66 @@
     "comments": {
       "patterns": [
         {
+          "name": "comment.block.pinescript",
+          "begin": "\\(",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          },
+          "end": "\\(",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          }
+        },
+        {
+          "name": "comment.block.pinescript",
+          "begin": "\\)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          }
+        },
+        {
+          "name": "comment.block.pinescript",
+          "begin": "\\[",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          },
+          "end": "\\[",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          }
+        },
+        {
+          "name": "comment.block.pinescript",
+          "begin": "\\]",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.pinescript"
+            }
+          }
+        },
+        {
           "begin": "//",
           "beginCaptures": {
             "1": {
@@ -55,21 +115,6 @@
             }
           },
           "end": "\\*/",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment.pinescript"
-            }
-          }
-        },
-        {
-          "name": "comment.block.pinescript",
-          "begin": "",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment.pinescript"
-            }
-          },
-          "end": "\n",
           "endCaptures": {
             "0": {
               "name": "punctuation.definition.comment.pinescript"

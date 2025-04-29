@@ -1,12 +1,12 @@
 {
-    "projectName": "Pinescript",
+    "projectName": "PineScript",
     "languages": [{
-        "id": "pinescript",
-        "grammar": "src/language-server/pinescript.langium",
+        "id": "pine-script",
+        "grammar": "src/language/pine-script.langium",
         "fileExtensions": [".pine"],
         "textMate": {
-            "out": "syntaxes/pinescript.tmLanguage.json"
+            "out": "syntaxes/pine-script.tmLanguage.json"
         }
     }],
-    "out": "src/language-server/generated"
+    "out": "src/language/generated"
 }

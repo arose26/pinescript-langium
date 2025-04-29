@@ -1,30 +1,23 @@
+import chalk from 'chalk';
+import { Command } from 'commander';
+import { PineScriptLanguageMetaData } from '../language/generated/module.js';
+import { createPineScriptServices } from '../language/pine-script-module.js';
 import { NodeFileSystem } from 'langium/node';
-import { createPinescriptServices } from './language-server/pinescript-module.js';
+import * as path from 'node:path';
 import { URI } from 'vscode-uri';
-import * as path from 'path';
 import { LangiumSharedCoreServices } from 'langium';
 
-/**
- * Parse and validate a PineScript file.
- */
-async function main(): Promise<void> {
+export const parseAction = async (fileName: string): Promise<void> => {
     // Create the language services
-    const services = createPinescriptServices(NodeFileSystem);
-
-    // Get the file path from command line arguments
-    const filePath = process.argv[2];
-    if (!filePath) {
-        console.error('Please provide a file path');
-        process.exit(1);
-    }
+    const services = createPineScriptServices(NodeFileSystem);
 
     // Get the full path
-    const fullPath = path.resolve(process.cwd(), filePath);
+    const fullPath = path.resolve(process.cwd(), fileName);
 
     try {
         // Create a document from the file content
         const uri = URI.file(fullPath);
-        console.log('Processing file:', uri.toString());
+        console.log(chalk.blue('Processing file:'), uri.toString());
 
         // Create a document and build it
         // First, set the root folder
@@ -34,36 +27,36 @@ async function main(): Promise<void> {
         const document = await services.shared.workspace.LangiumDocuments.getOrCreateDocument(uri);
 
         // Build the document (parse, link, validate)
-        console.log('\nBuilding document...');
+        console.log(chalk.blue('\nBuilding document...'));
         await services.shared.workspace.DocumentBuilder.build([document], { validation: true });
 
         // Get the parse result
         const parseResult = document.parseResult;
-        console.log('Parse complete!');
+        console.log(chalk.green('Parse complete!'));
 
         // Check for lexer errors
         if (parseResult.lexerErrors.length > 0) {
-            console.log('Lexer errors:', parseResult.lexerErrors.length);
-            parseResult.lexerErrors.forEach((error: any, index: number) => {
-                console.log(`  Error ${index + 1}: ${error.message}`);
+            console.log(chalk.red('Lexer errors:'), parseResult.lexerErrors.length);
+            parseResult.lexerErrors.forEach((error, index) => {
+                console.log(chalk.red(`  Error ${index + 1}:`), error.message);
             });
         } else {
-            console.log('No lexer errors.');
+            console.log(chalk.green('No lexer errors.'));
         }
 
         // Check for parser errors
         if (parseResult.parserErrors.length > 0) {
-            console.log('Parser errors:', parseResult.parserErrors.length);
-            parseResult.parserErrors.forEach((error: any, index: number) => {
-                console.log(`  Error ${index + 1}: ${error.message}`);
+            console.log(chalk.red('Parser errors:'), parseResult.parserErrors.length);
+            parseResult.parserErrors.forEach((error, index) => {
+                console.log(chalk.red(`  Error ${index + 1}:`), error.message);
             });
         } else {
-            console.log('No parser errors.');
+            console.log(chalk.green('No parser errors.'));
         }
 
         // Print the AST structure (just the top level)
         if (parseResult.value) {
-            console.log('\nAST structure:');
+            console.log(chalk.blue('\nAST structure:'));
             try {
                 // Create a custom replacer function to handle circular references
                 const getCircularReplacer = () => {
@@ -87,13 +80,13 @@ async function main(): Promise<void> {
                 const astString = JSON.stringify(parseResult.value, getCircularReplacer(), 2);
                 console.log(astString.substring(0, 500) + (astString.length > 500 ? '...' : ''));
             } catch (error) {
-                console.error('Error stringifying AST:', error);
+                console.error(chalk.red('Error stringifying AST:'), error);
 
                 // Print a simplified version of the AST
-                console.log('Simplified AST:');
+                console.log(chalk.blue('Simplified AST:'));
                 const simplifiedAst = {
                     $type: parseResult.value.$type,
-                    statements: (parseResult.value as any).statements?.map((stmt: any) => ({
+                    statements: (parseResult.value as any).statements?.statements?.map((stmt: any) => ({
                         $type: stmt.$type
                     }))
                 };
@@ -104,17 +97,19 @@ async function main(): Promise<void> {
         // Print validation diagnostics
         const diagnostics = document.diagnostics ?? [];
         if (diagnostics.length > 0) {
-            console.log('\nValidation diagnostics:');
+            console.log(chalk.yellow('\nValidation diagnostics:'));
             diagnostics.forEach((diagnostic: any, index: number) => {
-                console.log(`  Diagnostic ${index + 1}: ${diagnostic.message} [${diagnostic.range.start.line}:${diagnostic.range.start.character}]`);
+                console.log(chalk.yellow(`  Diagnostic ${index + 1}:`),
+                    diagnostic.message,
+                    chalk.gray(`[${diagnostic.range.start.line}:${diagnostic.range.start.character}]`));
             });
         } else {
-            console.log('\nNo validation diagnostics.');
+            console.log(chalk.green('\nNo validation diagnostics.'));
         }
     } catch (error) {
-        console.error('Error processing file:', error);
+        console.error(chalk.red('Error processing file:'), error);
     }
-}
+};
 
 /**
  * Set the root folder for the language server.
@@ -124,4 +119,15 @@ async function setRootFolder(fileName: string, services: LangiumSharedCoreServic
     // The workspace is initialized automatically when we create a document
 }
 
-main().catch(console.error);
+export default function(): void {
+    const program = new Command();
+
+    const fileExtensions = PineScriptLanguageMetaData.fileExtensions.join(', ');
+    program
+        .command('parse')
+        .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
+        .description('parse a PineScript file and display the AST')
+        .action(parseAction);
+
+    program.parse(process.argv);
+}

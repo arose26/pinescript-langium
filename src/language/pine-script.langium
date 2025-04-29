@@ -1,26 +1,23 @@
-grammar Pinescript
+grammar PineScript
 
-// Entry point - directly from ANTLR grammar
+// Entry point
 entry StartScript:
-    statements=Statements?;
+    (NEWLINE | COMMENT)* statements=Statements? NEWLINE*;
 
 // Statements
 Statements:
     statements+=Statement+;
 
 Statement:
-    CompoundStatement | SimpleStatements;
+    CompoundStatement | SimpleStatement;
 
 // Compound statements
 CompoundStatement:
     CompoundAssignment | FunctionDeclaration | TypeDeclaration | StructureStatement;
 
 // Simple statements
-SimpleStatements:
-    statements+=SimpleStatement (',' statements+=SimpleStatement)* ','? NEWLINE;
-
 SimpleStatement:
-    SimpleAssignment | ExpressionStatement | ImportStatement | BreakStatement | ContinueStatement;
+    (SimpleAssignment | ExpressionStatement | ImportStatement | BreakStatement | ContinueStatement) NEWLINE?;
 
 // Compound assignments
 CompoundAssignment:
@@ -76,39 +73,39 @@ IfStructure:
     IfStructureElif | IfStructureElse;
 
 IfStructureElif:
-    'if' condition=Expression thenBlock=LocalBlock elifBlock=ElifStructure;
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elifBlock=ElifStructure;
 
 IfStructureElse:
-    'if' condition=Expression thenBlock=LocalBlock elseBlock=ElseBlock?;
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elseBlock=ElseBlock?;
 
 ElifStructure:
     ElifStructureElif | ElifStructureElse;
 
 ElifStructureElif:
-    'else' 'if' condition=Expression thenBlock=LocalBlock elifBlock=ElifStructure;
+    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elifBlock=ElifStructure;
 
 ElifStructureElse:
-    'else' 'if' condition=Expression thenBlock=LocalBlock elseBlock=ElseBlock?;
+    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elseBlock=ElseBlock?;
 
 ElseBlock:
-    'else' block=LocalBlock;
+    'else' NEWLINE? INDENT block=Statements DEDENT;
 
 // For structure
 ForStructure:
     ForStructureTo | ForStructureIn;
 
 ForStructureTo:
-    'for' iterator=ForIterator '=' start=Expression 'to' end=Expression ('by' step=Expression)? block=LocalBlock;
+    'for' iterator=ForIterator '=' start=Expression 'to' end=Expression ('by' step=Expression)? NEWLINE? INDENT block=Statements DEDENT;
 
 ForStructureIn:
-    'for' iterator=ForIterator 'in' collection=Expression block=LocalBlock;
+    'for' iterator=ForIterator 'in' collection=Expression NEWLINE? INDENT block=Statements DEDENT;
 
 ForIterator:
     NameStore | TupleDeclaration;
 
 // While structure
 WhileStructure:
-    'while' condition=Expression block=LocalBlock;
+    'while' condition=Expression NEWLINE? INDENT block=Statements DEDENT;
 
 // Switch structure
 SwitchStructure:
@@ -297,7 +294,7 @@ TypeArgumentList:
 // The patterns don't matter as they will be overridden by the token builder
 terminal INDENT: 'synthetic:indent';
 terminal DEDENT: 'synthetic:dedent';
-terminal NEWLINE: 'synthetic:newline';
+terminal NEWLINE: /\r?\n/;
 
 // Common tokens
 terminal NAME: /[a-zA-Z_][a-zA-Z_0-9]*/;
@@ -324,6 +321,5 @@ NameStore returns string:
 
 // Hidden tokens - note that WS only matches spaces and tabs, not newlines
 hidden terminal WS: /[ \t]+/;
-hidden terminal COMMENT: /\/\/[^\n\r]*/;
+terminal COMMENT: /\/\/[^\n\r]*/;
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
-hidden terminal NL: /\r?\n/;
