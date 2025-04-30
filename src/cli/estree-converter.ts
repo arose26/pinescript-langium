@@ -14,6 +14,10 @@ import {
     SimpleNameInitialization,
     SimpleReassignment,
     IfStructure,
+    SimpleIfStructure,
+    IfElseStructure,
+    IfElseIfStructure,
+    ElseBlock,
     ForStructure,
     ForStructureTo,
     ForStructureIn,
@@ -73,6 +77,14 @@ export class PineScriptToESTreeConverter {
                 return this.convertSimpleReassignment(ast as SimpleReassignment);
             case 'IfStructure':
                 return this.convertIfStructure(ast as IfStructure);
+            case 'SimpleIfStructure':
+                return this.convertSimpleIfStructure(ast as SimpleIfStructure);
+            case 'IfElseStructure':
+                return this.convertIfElseStructure(ast as IfElseStructure);
+            case 'IfElseIfStructure':
+                return this.convertIfElseIfStructure(ast as IfElseIfStructure);
+            case 'ElseBlock':
+                return this.convertElseBlock(ast as ElseBlock);
             case 'ForStructure':
                 return this.convertForStructure(ast as ForStructure);
             case 'ForStructureTo':
@@ -208,10 +220,48 @@ export class PineScriptToESTreeConverter {
      * Convert a PrimaryExpressionCall node to an ESTree CallExpression node
      */
     convertPrimaryExpressionCall(node: PrimaryExpressionCall): any {
+        // Process arguments, separating positional and named arguments
+        const args = node.arguments?.arguments || [];
+        const positionalArgs: any[] = [];
+        const namedArgs: {name: string, value: any}[] = [];
+
+        args.forEach(arg => {
+            if (arg.name) {
+                // This is a named argument
+                namedArgs.push({
+                    name: arg.name,
+                    value: this.convert(arg.expression)
+                });
+            } else {
+                // This is a positional argument
+                positionalArgs.push(this.convert(arg.expression));
+            }
+        });
+
+        // If we have named arguments, create an object literal as the last argument
+        const finalArgs = [...positionalArgs];
+        if (namedArgs.length > 0) {
+            finalArgs.push({
+                type: 'ObjectExpression',
+                properties: namedArgs.map(namedArg => ({
+                    type: 'Property',
+                    key: {
+                        type: 'Identifier',
+                        name: namedArg.name
+                    },
+                    value: namedArg.value,
+                    kind: 'init',
+                    computed: false,
+                    method: false,
+                    shorthand: false
+                }))
+            });
+        }
+
         return {
             type: 'CallExpression',
             callee: this.convert(node.expression),
-            arguments: node.arguments?.arguments.map(arg => this.convert(arg.expression)) || []
+            arguments: finalArgs
         };
     }
 
@@ -246,6 +296,44 @@ export class PineScriptToESTreeConverter {
      * Convert a PrimaryExpressionMethodCall node to an ESTree CallExpression node
      */
     convertPrimaryExpressionMethodCall(node: PrimaryExpressionMethodCall): any {
+        // Process arguments, separating positional and named arguments
+        const args = node.arguments?.arguments || [];
+        const positionalArgs: any[] = [];
+        const namedArgs: {name: string, value: any}[] = [];
+
+        args.forEach(arg => {
+            if (arg.name) {
+                // This is a named argument
+                namedArgs.push({
+                    name: arg.name,
+                    value: this.convert(arg.expression)
+                });
+            } else {
+                // This is a positional argument
+                positionalArgs.push(this.convert(arg.expression));
+            }
+        });
+
+        // If we have named arguments, create an object literal as the last argument
+        const finalArgs = [...positionalArgs];
+        if (namedArgs.length > 0) {
+            finalArgs.push({
+                type: 'ObjectExpression',
+                properties: namedArgs.map(namedArg => ({
+                    type: 'Property',
+                    key: {
+                        type: 'Identifier',
+                        name: namedArg.name
+                    },
+                    value: namedArg.value,
+                    kind: 'init',
+                    computed: false,
+                    method: false,
+                    shorthand: false
+                }))
+            });
+        }
+
         return {
             type: 'CallExpression',
             callee: {
@@ -257,7 +345,7 @@ export class PineScriptToESTreeConverter {
                 },
                 computed: false
             },
-            arguments: node.arguments?.arguments.map(arg => this.convert(arg.expression)) || []
+            arguments: finalArgs
         };
     }
 
@@ -300,74 +388,86 @@ export class PineScriptToESTreeConverter {
      * Convert an IfStructure node to an ESTree IfStatement node
      */
     convertIfStructure(node: IfStructure): any {
-        // Create block statement for the then block
-        const consequent = {
-            type: 'BlockStatement',
-            body: this.convertStatementsToBody(node.thenBlock)
-        };
-
-        // Handle the else-if and else blocks
-        let alternate = null;
-
-        if (node.elifCondition && node.elifBlock) {
-            // Create a nested if statement for the else-if block
-            const elifConsequent = {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.elifBlock)
-            };
-
-            let elifAlternate = null;
-
-            if (node.elif2Condition && node.elif2Block) {
-                // Create a nested if statement for the second else-if block
-                const elif2Consequent = {
-                    type: 'BlockStatement',
-                    body: this.convertStatementsToBody(node.elif2Block)
-                };
-
-                let elif2Alternate = null;
-
-                if (node.elseBlock) {
-                    // Create a block statement for the else block
-                    elif2Alternate = {
-                        type: 'BlockStatement',
-                        body: this.convertStatementsToBody(node.elseBlock)
-                    };
-                }
-
-                elifAlternate = {
-                    type: 'IfStatement',
-                    test: this.convert(node.elif2Condition),
-                    consequent: elif2Consequent,
-                    alternate: elif2Alternate
-                };
-            } else if (node.elseBlock) {
-                // Create a block statement for the else block
-                elifAlternate = {
-                    type: 'BlockStatement',
-                    body: this.convertStatementsToBody(node.elseBlock)
-                };
-            }
-
-            alternate = {
-                type: 'IfStatement',
-                test: this.convert(node.elifCondition),
-                consequent: elifConsequent,
-                alternate: elifAlternate
-            };
-        } else if (node.elseBlock) {
-            // Create a block statement for the else block
-            alternate = {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.elseBlock)
-            };
+        if (node.$type === 'SimpleIfStructure') {
+            return this.convertSimpleIfStructure(node as SimpleIfStructure);
+        } else if (node.$type === 'IfElseStructure') {
+            return this.convertIfElseStructure(node as IfElseStructure);
+        } else if (node.$type === 'IfElseIfStructure') {
+            return this.convertIfElseIfStructure(node as IfElseIfStructure);
         }
 
+        // Fallback
+        return {
+            type: 'IfStatement',
+            test: { type: 'Literal', value: true },
+            consequent: { type: 'BlockStatement', body: [] },
+            alternate: null
+        };
+    }
+
+    /**
+     * Convert a SimpleIfStructure node to an ESTree IfStatement node
+     */
+    convertSimpleIfStructure(node: SimpleIfStructure): any {
         return {
             type: 'IfStatement',
             test: this.convert(node.condition),
-            consequent,
-            alternate
+            consequent: {
+                type: 'BlockStatement',
+                body: this.convertStatementsToBody(node.thenBlock)
+            },
+            alternate: null
+        };
+    }
+
+    /**
+     * Convert an IfElseStructure node to an ESTree IfStatement node
+     */
+    convertIfElseStructure(node: IfElseStructure): any {
+        return {
+            type: 'IfStatement',
+            test: this.convert(node.condition),
+            consequent: {
+                type: 'BlockStatement',
+                body: this.convertStatementsToBody(node.thenBlock)
+            },
+            alternate: {
+                type: 'BlockStatement',
+                body: this.convertStatementsToBody(node.elseBlock)
+            }
+        };
+    }
+
+    /**
+     * Convert an IfElseIfStructure node to an ESTree IfStatement node
+     */
+    convertIfElseIfStructure(node: IfElseIfStructure): any {
+        return {
+            type: 'IfStatement',
+            test: this.convert(node.condition),
+            consequent: {
+                type: 'BlockStatement',
+                body: this.convertStatementsToBody(node.thenBlock)
+            },
+            alternate: {
+                type: 'IfStatement',
+                test: this.convert(node.elifCondition),
+                consequent: {
+                    type: 'BlockStatement',
+                    body: this.convertStatementsToBody(node.elifBlock)
+                },
+                alternate: null
+            }
+        };
+    }
+
+    /**
+     * Convert an ElseBlock node to an ESTree BlockStatement node
+     */
+    convertElseBlock(node: ElseBlock): any {
+        return {
+            type: 'BlockStatement',
+            body: this.convertStatementsToBody(node.block)
         };
     }
 

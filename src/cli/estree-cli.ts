@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { PineScriptToESTreeConverter } from './estree-converter.js';
 import { StartScript } from '../language/generated/ast.js';
 import * as escodegen from 'escodegen';
+import { inspect } from 'node:util';
 import { LangiumDocument } from 'langium';
 import { URI } from 'vscode-uri';
 import { extractDocument } from './cli-util.js';
@@ -100,6 +101,10 @@ async function main() {
             console.error('Failed to parse the file');
             process.exit(1);
         }
+
+        // Print the AST structure
+        console.log('AST Structure:');
+        console.log(inspect(ast, { depth: 10, colors: true }));
 
         // Convert to ESTree
         console.log('Converting to ESTree...');

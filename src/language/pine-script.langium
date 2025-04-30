@@ -73,22 +73,19 @@ StructureExpression:
 
 // If structure
 IfStructure:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
-    (
-        ('else' 'if' elifCondition=Expression NEWLINE? INDENT elifBlock=Statements DEDENT
-            (
-                ('else' 'if' elif2Condition=Expression NEWLINE? INDENT elif2Block=Statements DEDENT
-                    (
-                        ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
-                    )?
-                )?
-                |
-                ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
-            )?
-        )?
-        |
-        ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
-    )?;
+    SimpleIfStructure | IfElseStructure | IfElseIfStructure;
+
+SimpleIfStructure:
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT;
+
+IfElseStructure:
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT 'else' NEWLINE? INDENT elseBlock=Statements DEDENT;
+
+IfElseIfStructure:
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT 'else' 'if' elifCondition=Expression NEWLINE? INDENT elifBlock=Statements DEDENT (ElseBlock)?;
+
+ElseBlock:
+    'else' NEWLINE? INDENT block=Statements DEDENT;
 
 // For structure
 ForStructure:

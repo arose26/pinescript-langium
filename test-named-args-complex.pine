@@ -1,0 +1,18 @@
+// Test file for complex named arguments
+
+// Function with mixed positional and named arguments
+testMixedArgs() =>
+    plot(close, "Close", color="red", linewidth=2, style=plot.style_line)
+    
+// Function with nested function calls with named arguments
+testNestedArgs() =>
+    plot(ta.sma(close, length=20), "SMA", color="blue", linewidth=2)
+    
+// Function with method call with named arguments
+testMethodArgs() =>
+    array.push(myArray, value=42, index=0)
+    
+// Test usage
+testMixedArgs()
+testNestedArgs()
+testMethodArgs()

@@ -1,0 +1,20 @@
+// Test file for array literals
+
+// Simple array literal
+testArrayLiteral() =>
+    [1, 2, 3]
+
+// Array literal with expressions
+testArrayExpressions() =>
+    [1 + 2, 3 * 4, 5 / 2]
+
+// Array literal as return value
+testArrayReturn() =>
+    a = 1
+    b = 2
+    [a, b, a + b]
+
+// Test usage
+var result1 = testArrayLiteral()
+var result2 = testArrayExpressions()
+var result3 = testArrayReturn()

@@ -1,0 +1,13 @@
+// Test file with minimal content
+
+// Simple function
+testFunc(a, b) =>
+    a + b
+
+// Array function
+testArray() =>
+    [1, 2, 3]
+
+// Test usage
+var result1 = testFunc(10, 20)
+var result2 = testArray()

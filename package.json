@@ -16,7 +16,8 @@
         "langium:generate:production": "langium generate --mode=production",
         "langium:watch": "langium generate --watch",
         "vscode:prepublish": "npm run build && npm run lint",
-        "estree": "node --loader ts-node/esm src/cli/estree-cli.ts"
+        "estree": "node --loader ts-node/esm src/cli/estree-cli.ts",
+        "debug-ast": "node --loader ts-node/esm src/cli/debug-ast.ts"
     },
     "dependencies": {
         "chalk": "~5.3.0",

@@ -1,0 +1,8 @@
+// Test file for named arguments
+
+// Function call with named arguments
+testNamedArgs() =>
+    plot(close, "Close", color="red", linewidth=2)
+    
+// Test usage
+testNamedArgs()

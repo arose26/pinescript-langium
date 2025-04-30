@@ -1,0 +1,23 @@
+// Test file with minimal content
+
+// Simple function
+testFunc(a, b) =>
+    a + b
+
+// Array function
+testArray() =>
+    [1, 2, 3]
+
+// If-else function
+testIfElse(a, b) =>
+    if a > b
+        a + b
+    else if a < b
+        a - b
+    else
+        a * b
+
+// Test usage
+var result1 = testFunc(10, 20)
+var result2 = testArray()
+var result3 = testIfElse(10, 20)
