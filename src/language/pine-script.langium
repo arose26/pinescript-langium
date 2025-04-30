@@ -43,7 +43,7 @@ CompoundAugAssignment:
 
 // Function declaration
 FunctionDeclaration:
-    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR ('=>' body=LocalBlock | NEWLINE? INDENT body=Statements DEDENT);
+    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR ('=>' (body=LocalBlock | returnExpr=Expression) | NEWLINE? INDENT body=Statements DEDENT);
 
 ParameterList:
     parameters+=ParameterDefinition (',' parameters+=ParameterDefinition)* ','?;
@@ -73,25 +73,22 @@ StructureExpression:
 
 // If structure
 IfStructure:
-    IfStructureElif | IfStructureElse;
-
-IfStructureElif:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elifBlock=ElifStructure;
-
-IfStructureElse:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elseBlock=ElseBlock?;
-
-ElifStructure:
-    ElifStructureElif | ElifStructureElse;
-
-ElifStructureElif:
-    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elifBlock=ElifStructure;
-
-ElifStructureElse:
-    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT elseBlock=ElseBlock?;
-
-ElseBlock:
-    'else' NEWLINE? INDENT block=Statements DEDENT;
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
+    (
+        ('else' 'if' elifCondition=Expression NEWLINE? INDENT elifBlock=Statements DEDENT
+            (
+                ('else' 'if' elif2Condition=Expression NEWLINE? INDENT elif2Block=Statements DEDENT
+                    (
+                        ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
+                    )?
+                )?
+                |
+                ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
+            )?
+        )?
+        |
+        ('else' NEWLINE? INDENT elseBlock=Statements DEDENT)?
+    )?;
 
 // For structure
 ForStructure:
@@ -156,12 +153,12 @@ SimpleAugAssignment:
 Expression:
     ConditionalExpression;
 
-ExpressionStatement:
-    expression=Expression;
-
 // Conditional ternary expression
 ConditionalExpression infers Expression:
     DisjunctionExpression ({infer ConditionalExpressionRule.condition=current} '?' thenExpr=Expression ':' elseExpr=Expression)?;
+
+ExpressionStatement:
+    expression=Expression;
 
 // Logical expressions
 DisjunctionExpression infers Expression:
@@ -309,6 +306,8 @@ TypeArgumentList:
 terminal INDENT: 'synthetic:indent';
 terminal DEDENT: 'synthetic:dedent';
 terminal NEWLINE: /\r?\n/;
+
+
 
 // Common tokens
 terminal NAME: /[a-zA-Z_][a-zA-Z_0-9]*/;

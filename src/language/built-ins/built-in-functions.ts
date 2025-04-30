@@ -8,6 +8,8 @@ export interface ParameterInfo {
     description: string;
     optional?: boolean;
     defaultValue?: string;
+    // Additional parameters for PineScript v5
+    group?: boolean;
 }
 
 export interface FunctionInfo {
@@ -368,21 +370,23 @@ const taFunctions: FunctionInfo[] = [
         returnType: 'series float',
         parameters: [
             {
-                name: 'source',
-                type: 'series float',
-                description: 'Source series to find the highest value',
-                defaultValue: 'high'
-            },
-            {
                 name: 'length',
                 type: 'simple int',
                 description: 'Number of bars to check',
                 defaultValue: '14'
+            },
+            {
+                name: 'source',
+                type: 'series float',
+                description: 'Source series to find the highest value',
+                defaultValue: 'high',
+                optional: true
             }
         ],
         examples: [
-            'ta.highest(high, 14)',
-            'ta.highest(close, 50)'
+            'ta.highest(14)',
+            'ta.highest(14, high)',
+            'ta.highest(50, close)'
         ],
         since: '1'
     },
@@ -393,21 +397,23 @@ const taFunctions: FunctionInfo[] = [
         returnType: 'series float',
         parameters: [
             {
-                name: 'source',
-                type: 'series float',
-                description: 'Source series to find the lowest value',
-                defaultValue: 'low'
-            },
-            {
                 name: 'length',
                 type: 'simple int',
                 description: 'Number of bars to check',
                 defaultValue: '14'
+            },
+            {
+                name: 'source',
+                type: 'series float',
+                description: 'Source series to find the lowest value',
+                defaultValue: 'low',
+                optional: true
             }
         ],
         examples: [
-            'ta.lowest(low, 14)',
-            'ta.lowest(close, 50)'
+            'ta.lowest(14)',
+            'ta.lowest(14, low)',
+            'ta.lowest(50, close)'
         ],
         since: '1'
     },
@@ -729,11 +735,19 @@ const inputFunctions: FunctionInfo[] = [
                 description: 'Tooltip text',
                 optional: true,
                 defaultValue: '""'
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
             }
         ],
         examples: [
             'input.int(14, "Period")',
-            'input.int(14, "Period", 1, 100, 1, false, "The period for the calculation")'
+            'input.int(14, "Period", 1, 100, 1, false, "The period for the calculation")',
+            'input.int(14, "Period", group="Settings")'
         ],
         since: '4'
     },
@@ -787,11 +801,19 @@ const inputFunctions: FunctionInfo[] = [
                 description: 'Tooltip text',
                 optional: true,
                 defaultValue: '""'
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
             }
         ],
         examples: [
             'input.float(1.5, "Multiplier")',
-            'input.float(1.5, "Multiplier", 0.1, 10.0, 0.1, false, "The multiplier for the calculation")'
+            'input.float(1.5, "Multiplier", 0.1, 10.0, 0.1, false, "The multiplier for the calculation")',
+            'input.float(1.5, "Multiplier", group="Settings")'
         ],
         since: '4'
     },
@@ -819,11 +841,146 @@ const inputFunctions: FunctionInfo[] = [
                 description: 'Tooltip text',
                 optional: true,
                 defaultValue: '""'
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
             }
         ],
         examples: [
             'input.source(close, "Source")',
-            'input.source(hlc3, "Source", "The source for the calculation")'
+            'input.source(hlc3, "Source", "The source for the calculation")',
+            'input.source(close, "Source", group="Settings")'
+        ],
+        since: '4'
+    },
+    {
+        name: 'bool',
+        namespace: 'input',
+        description: 'Creates a boolean input',
+        returnType: 'input bool',
+        parameters: [
+            {
+                name: 'defval',
+                type: 'simple bool',
+                description: 'Default value'
+            },
+            {
+                name: 'title',
+                type: 'simple string',
+                description: 'Title of the input',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'tooltip',
+                type: 'simple string',
+                description: 'Tooltip text',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
+            }
+        ],
+        examples: [
+            'input.bool(true, "Enable")',
+            'input.bool(true, "Enable", "Enable this feature")',
+            'input.bool(true, "Enable", group="Settings")'
+        ],
+        since: '4'
+    },
+    {
+        name: 'string',
+        namespace: 'input',
+        description: 'Creates a string input',
+        returnType: 'input string',
+        parameters: [
+            {
+                name: 'defval',
+                type: 'simple string',
+                description: 'Default value'
+            },
+            {
+                name: 'title',
+                type: 'simple string',
+                description: 'Title of the input',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'tooltip',
+                type: 'simple string',
+                description: 'Tooltip text',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'options',
+                type: 'simple array',
+                description: 'Array of options for the dropdown',
+                optional: true
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
+            }
+        ],
+        examples: [
+            'input.string("BTC", "Symbol")',
+            'input.string("BTC", "Symbol", "The symbol to use")',
+            'input.string("BTC", "Symbol", options=["BTC", "ETH", "LTC"])',
+            'input.string("BTC", "Symbol", group="Settings")'
+        ],
+        since: '4'
+    },
+    {
+        name: 'timeframe',
+        namespace: 'input',
+        description: 'Creates a timeframe input',
+        returnType: 'input string',
+        parameters: [
+            {
+                name: 'defval',
+                type: 'simple string',
+                description: 'Default value'
+            },
+            {
+                name: 'title',
+                type: 'simple string',
+                description: 'Title of the input',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'tooltip',
+                type: 'simple string',
+                description: 'Tooltip text',
+                optional: true,
+                defaultValue: '""'
+            },
+            {
+                name: 'group',
+                type: 'simple string',
+                description: 'Group name for the input',
+                optional: true,
+                defaultValue: '""'
+            }
+        ],
+        examples: [
+            'input.timeframe("D", "Timeframe")',
+            'input.timeframe("D", "Timeframe", "The timeframe to use")',
+            'input.timeframe("D", "Timeframe", group="Settings")'
         ],
         since: '4'
     }

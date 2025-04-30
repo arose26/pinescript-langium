@@ -14,7 +14,7 @@ ncPCA           = input.string('Centered Reduced', title='How to display all PCA
 //---- Method
 MaxMinNz(value,max=100,min=0,def=50) =>
     nz(math.max(math.min(value,max),min),def)
-    
+
 isPL(src=close,left=3,right=0) =>
     ta.pivotlow(src,left,right)
 
@@ -34,7 +34,7 @@ distanceSMA(l,ampl,offset) =>
 
 williamsRangeMethod(length) =>
 	(source - ta.lowest(length)) / (ta.highest(length) - ta.lowest(length)) * 100
-	
+
 momentumMethod(length,ampl=100, offset=50) =>
     MaxMinNz((source/source[length]-1)*ampl+offset)
 
@@ -78,15 +78,15 @@ aroonMethod(lengthUp,lengthDown) =>
 haCountMethod(length) =>
     [haclose,haopen] = request.security(ticker.heikinashi(syminfo.tickerid), mtf, [close,open])
     hac = 50.0
-    hac := if barstate.isfirst
-        50
+    if barstate.isfirst
+        hac := 50
     else if haclose > haopen
-        hac[1] / length + (100 * ((length - 1)/length))
+        hac := hac[1] / length + (100 * ((length - 1)/length))
     else if haclose < haopen
-        hac[1] / length
+        hac := hac[1] / length
     else
-        hac[1]
-    
+        hac := hac[1]
+
 cmfMethod(length,ampl=150,offset=50) =>
     mfv = math.sum(((high == low) ? 0 : ((close - low) - (high - close)) / (high - low)) * volume, length) / math.sum(volume, length)
     MaxMinNz(mfv * ampl + offset)
@@ -97,15 +97,15 @@ TDSMethod(length=4,maxTD=13) =>
     TDSDown     = 0
     TDSDown     := source < source[length] ? nz(TDSDown[1]) - 1 : 0
     [MaxMinNz((((TDSUp + TDSDown) / maxTD) + 1) * 50),TDSUp,TDSDown]
-    
+
 isInBullDivergence(indicator,price=close,length=100,confirm=true,confLength=1) =>
     isDiv = 0
     confirmOffset = confirm ? confLength : 0
     LL = indicator[0+confirmOffset]
     if (isPL(indicator,right=confirmOffset) and indicator < 50)
         for i = 1+confirmOffset to length+confirmOffset
-    		if (LL > indicator[i] and indicator[i] < indicator[i+1])
-    		    LL := indicator[i]
-    		    if (price[i] > price[confirmOffset] and ta.lowestbars(price,i) < 3)
-    		        isDiv := i
+            if (LL > indicator[i] and indicator[i] < indicator[i+1])
+                LL := indicator[i]
+                if (price[i] > price[confirmOffset] and ta.lowestbars(price,i) < 3)
+                    isDiv := i
     isDiv

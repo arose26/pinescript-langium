@@ -2,11 +2,17 @@ import { IndentationAwareTokenBuilder } from 'langium';
 import { createToken } from 'chevrotain';
 
 /**
- * Custom token builder for PineScript that handles the less than operator correctly.
+ * Custom token builder for PineScript that handles the less than operator correctly
+ * and supports mixed indentation (spaces and tabs).
  */
 export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
     constructor() {
         super({
+            // Configure the indentation-aware token builder
+            indentTokenName: 'INDENT',
+            dedentTokenName: 'DEDENT',
+            whitespaceTokenName: 'WS',
+            // Ignore indentation inside parentheses and brackets
             ignoreIndentationDelimiters: [
                 ['LPAR', 'RPAR'],
                 ['LSQB', 'RSQB']
@@ -68,5 +74,24 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
         }
 
         return tokens;
+    }
+
+    /**
+     * Override the calculateIndentationLevel method to handle mixed indentation (spaces and tabs).
+     */
+    protected calculateIndentationLevel(text: string): number {
+        // Count spaces and tabs, where a tab is equivalent to 4 spaces
+        let indentLevel = 0;
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === ' ') {
+                indentLevel += 1;
+            } else if (text[i] === '\t') {
+                // A tab is equivalent to 4 spaces
+                indentLevel += 4;
+            } else {
+                break;
+            }
+        }
+        return indentLevel;
     }
 }

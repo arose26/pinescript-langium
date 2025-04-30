@@ -1,0 +1,28 @@
+// Simplified version of PCA.pine focusing on problematic constructs
+
+// Test if-else with else if
+testIfElse(a, b) =>
+    if a > b
+        a + b
+    else if a < b
+        a - b
+    else
+        a * b
+
+// Test array return
+testArray() =>
+    [1, 2, 3]
+
+// Test ternary operator
+testTernary(a, b) =>
+    a > b ? a : b
+
+// Test function with default parameters
+testDefaultParams(a, b=10) =>
+    a + b
+
+// Test usage
+var result1 = testIfElse(10, 20)
+var result2 = testArray()
+var result3 = testTernary(10, 20)
+var result4 = testDefaultParams(5)

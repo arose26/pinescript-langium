@@ -14,8 +14,6 @@ import {
     SimpleNameInitialization,
     SimpleReassignment,
     IfStructure,
-    IfStructureElse,
-    IfStructureElif,
     ForStructure,
     ForStructureTo,
     ForStructureIn,
@@ -28,7 +26,8 @@ import {
     StructureStatement,
     AssignmentTargetName,
     InequalityExpressionRule,
-    EqualityExpressionRule
+    EqualityExpressionRule,
+    ConditionalExpressionRule
 } from '../language/generated/ast.js';
 
 /**
@@ -74,10 +73,6 @@ export class PineScriptToESTreeConverter {
                 return this.convertSimpleReassignment(ast as SimpleReassignment);
             case 'IfStructure':
                 return this.convertIfStructure(ast as IfStructure);
-            case 'IfStructureElse':
-                return this.convertIfStructure(ast as IfStructureElse);
-            case 'IfStructureElif':
-                return this.convertIfStructure(ast as IfStructureElif);
             case 'ForStructure':
                 return this.convertForStructure(ast as ForStructure);
             case 'ForStructureTo':
@@ -104,6 +99,8 @@ export class PineScriptToESTreeConverter {
                 return this.convertInequalityExpressionRule(ast as InequalityExpressionRule);
             case 'EqualityExpressionRule':
                 return this.convertEqualityExpressionRule(ast as EqualityExpressionRule);
+            case 'ConditionalExpressionRule':
+                return this.convertConditionalExpressionRule(ast as ConditionalExpressionRule);
             // ReturnStatement is not part of our AST yet
             // case 'ReturnStatement':
             //    return this.convertReturnStatement(ast as ReturnStatement);
@@ -303,55 +300,74 @@ export class PineScriptToESTreeConverter {
      * Convert an IfStructure node to an ESTree IfStatement node
      */
     convertIfStructure(node: IfStructure): any {
-        if (node.$type === 'IfStructureElse') {
-            const ifElse = node as IfStructureElse;
+        // Create block statement for the then block
+        const consequent = {
+            type: 'BlockStatement',
+            body: this.convertStatementsToBody(node.thenBlock)
+        };
 
-            // Create block statement for the then block
-            const consequent = {
+        // Handle the else-if and else blocks
+        let alternate = null;
+
+        if (node.elifCondition && node.elifBlock) {
+            // Create a nested if statement for the else-if block
+            const elifConsequent = {
                 type: 'BlockStatement',
-                body: this.convertStatementsToBody(ifElse.thenBlock)
+                body: this.convertStatementsToBody(node.elifBlock)
             };
 
-            let alternate = null;
-            if (ifElse.elseBlock) {
-                alternate = {
+            let elifAlternate = null;
+
+            if (node.elif2Condition && node.elif2Block) {
+                // Create a nested if statement for the second else-if block
+                const elif2Consequent = {
                     type: 'BlockStatement',
-                    body: this.convertStatementsToBody(ifElse.elseBlock.block)
+                    body: this.convertStatementsToBody(node.elif2Block)
+                };
+
+                let elif2Alternate = null;
+
+                if (node.elseBlock) {
+                    // Create a block statement for the else block
+                    elif2Alternate = {
+                        type: 'BlockStatement',
+                        body: this.convertStatementsToBody(node.elseBlock)
+                    };
+                }
+
+                elifAlternate = {
+                    type: 'IfStatement',
+                    test: this.convert(node.elif2Condition),
+                    consequent: elif2Consequent,
+                    alternate: elif2Alternate
+                };
+            } else if (node.elseBlock) {
+                // Create a block statement for the else block
+                elifAlternate = {
+                    type: 'BlockStatement',
+                    body: this.convertStatementsToBody(node.elseBlock)
                 };
             }
 
-            return {
+            alternate = {
                 type: 'IfStatement',
-                test: this.convert(ifElse.condition),
-                consequent,
-                alternate
+                test: this.convert(node.elifCondition),
+                consequent: elifConsequent,
+                alternate: elifAlternate
             };
-        } else if (node.$type === 'IfStructureElif') {
-            const ifElif = node as IfStructureElif;
-
-            // Create block statement for the then block
-            const consequent = {
+        } else if (node.elseBlock) {
+            // Create a block statement for the else block
+            alternate = {
                 type: 'BlockStatement',
-                body: this.convertStatementsToBody(ifElif.thenBlock)
-            };
-
-            // For elif blocks, we need to convert them to nested if statements
-            const alternate = this.convert(ifElif.elifBlock);
-
-            return {
-                type: 'IfStatement',
-                test: this.convert(ifElif.condition),
-                consequent,
-                alternate
+                body: this.convertStatementsToBody(node.elseBlock)
             };
         }
 
-        // Fallback
         return {
             type: 'IfStatement',
-            test: { type: 'Literal', value: true },
-            consequent: { type: 'BlockStatement', body: [] },
-            alternate: null
+            test: this.convert(node.condition),
+            consequent,
+            alternate
         };
     }
 
@@ -512,15 +528,24 @@ export class PineScriptToESTreeConverter {
 
         let bodyStatements = [];
 
+        // If it has a returnExpr, create a return statement with it
+        if (node.returnExpr) {
+            bodyStatements = [
+                {
+                    type: 'ReturnStatement',
+                    argument: this.convert(node.returnExpr)
+                }
+            ];
+        }
         // If it's an inline block, we need to add a return statement
-        if (node.body.$type === 'InlineLocalBlock') {
+        else if (node.body?.$type === 'InlineLocalBlock') {
             bodyStatements = [
                 {
                     type: 'ReturnStatement',
                     argument: this.convert(node.body.statement)
                 }
             ];
-        } else {
+        } else if (node.body) {
             bodyStatements = this.convertStatementsToBody(node.body);
         }
 
@@ -537,6 +562,8 @@ export class PineScriptToESTreeConverter {
             }
         };
     }
+
+
 
     /**
      * Convert an ArrayExpression node to an ESTree ArrayExpression node
@@ -649,6 +676,18 @@ export class PineScriptToESTreeConverter {
             operator,
             left: this.convert(node.left),
             right: this.convert(pair.right)
+        };
+    }
+
+    /**
+     * Convert a ConditionalExpressionRule node to an ESTree ConditionalExpression node
+     */
+    convertConditionalExpressionRule(node: ConditionalExpressionRule): any {
+        return {
+            type: 'ConditionalExpression',
+            test: this.convert(node.condition),
+            consequent: this.convert(node.thenExpr),
+            alternate: this.convert(node.elseExpr)
         };
     }
 

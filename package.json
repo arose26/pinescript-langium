@@ -78,6 +78,12 @@
         "onLanguage:pine-script"
     ],
     "main": "./out/extension/main.cjs",
+    "exports": {
+        ".": {
+            "import": "./out/index.js",
+            "require": "./out/index.cjs"
+        }
+    },
     "bin": {
         "pine-script-cli": "./bin/cli.js"
     }

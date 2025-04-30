@@ -26,7 +26,8 @@ const plugins = [{
     },
 }];
 
-const ctx = await esbuild.context({
+// Build the VSCode extension and language server (CommonJS format)
+const ctxCjs = await esbuild.context({
     // Entry points for the vscode extension and the language server
     entryPoints: ['src/extension/main.ts', 'src/language/main.ts'],
     outdir: 'out',
@@ -46,9 +47,52 @@ const ctx = await esbuild.context({
     plugins
 });
 
+// Build the library for ESM (import) usage
+const ctxEsm = await esbuild.context({
+    entryPoints: ['src/index.ts'],
+    outdir: 'out',
+    bundle: true,
+    target: "ES2020",
+    format: 'esm',
+    loader: { '.ts': 'ts' },
+    external: ['vscode', 'langium', 'langium/node', 'escodegen'],
+    platform: 'node',
+    sourcemap: !minify,
+    minify,
+    plugins
+});
+
+// Build the library for CJS (require) usage
+const ctxLibCjs = await esbuild.context({
+    entryPoints: ['src/index.ts'],
+    outdir: 'out',
+    bundle: true,
+    target: "ES2017",
+    format: 'cjs',
+    outExtension: {
+        '.js': '.cjs'
+    },
+    loader: { '.ts': 'ts' },
+    external: ['vscode', 'langium', 'langium/node', 'escodegen'],
+    platform: 'node',
+    sourcemap: !minify,
+    minify,
+    plugins
+});
+
 if (watch) {
-    await ctx.watch();
+    await Promise.all([
+        ctxCjs.watch(),
+        ctxEsm.watch(),
+        ctxLibCjs.watch()
+    ]);
 } else {
-    await ctx.rebuild();
-    ctx.dispose();
+    await Promise.all([
+        ctxCjs.rebuild(),
+        ctxEsm.rebuild(),
+        ctxLibCjs.rebuild()
+    ]);
+    ctxCjs.dispose();
+    ctxEsm.dispose();
+    ctxLibCjs.dispose();
 }
