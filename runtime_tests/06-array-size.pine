@@ -1,0 +1,11 @@
+//@version=5
+indicator("Array Size Test")
+
+// Create a simple array
+arr = [1, 2, 3, 4, 5]
+
+// Get the size of the array
+size = array.size(arr)
+
+// Plot the size
+plot(size, "Array Size", color=color.blue)

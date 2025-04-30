@@ -1,0 +1,7 @@
+//@version=5
+indicator("Basic Structure Test", overlay=true)
+
+// This is a simple indicator that plots the close price
+plot(open, "Open")
+plot(close, "Close")
+

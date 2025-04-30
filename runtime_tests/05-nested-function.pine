@@ -1,0 +1,15 @@
+//@version=5
+indicator("Nested Function Test")
+
+// Simple functions
+add(a, b) =>
+    a + b
+
+multiply(a, b) =>
+    a * b
+
+// Nested function call
+result = multiply(add(2, 3), 4)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

@@ -1,0 +1,13 @@
+//@version=5
+indicator("Array Return From Function Test")
+
+// Create a function that returns an array with two elements
+get_values() =>
+    [15, 25]
+
+// Call the function and destructure the result
+[a, b] = get_values()
+
+// Plot the values
+plot(a, "First Value", color=color.blue)
+plot(b, "Second Value", color=color.green)

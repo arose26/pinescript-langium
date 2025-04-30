@@ -1,4 +1,13 @@
-// Simplified version of PCA.pine focusing on problematic constructs
+//@version=5
+indicator("PCA Simplified Test")
+
+// Test array subscript
+var arr = [1, 2, 3, 4, 5]
+var value = arr[1]
+
+// Test less than operator
+var isLessThan = 5 < 10
+var isGreaterThan = 10 > 5
 
 // Test if-else with else if
 testIfElse(a, b) =>
@@ -26,3 +35,5 @@ var result1 = testIfElse(10, 20)
 var result2 = testArray()
 var result3 = testTernary(10, 20)
 var result4 = testDefaultParams(5)
+
+plot(1, "Result: " + result1, color=color.blue)

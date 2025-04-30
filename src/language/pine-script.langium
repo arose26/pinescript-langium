@@ -73,19 +73,23 @@ StructureExpression:
 
 // If structure
 IfStructure:
-    SimpleIfStructure | IfElseStructure | IfElseIfStructure;
+    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
+    (
+        ElseIfClause |
+        ElseClause
+    )?;
 
-SimpleIfStructure:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT;
+// Else-if clause
+ElseIfClause:
+    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
+    (
+        ElseIfClause |
+        ElseClause
+    )?;
 
-IfElseStructure:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT 'else' NEWLINE? INDENT elseBlock=Statements DEDENT;
-
-IfElseIfStructure:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT 'else' 'if' elifCondition=Expression NEWLINE? INDENT elifBlock=Statements DEDENT (ElseBlock)?;
-
-ElseBlock:
-    'else' NEWLINE? INDENT block=Statements DEDENT;
+// Else clause
+ElseClause:
+    'else' NEWLINE? INDENT elseBlock=Statements DEDENT;
 
 // For structure
 ForStructure:
@@ -181,7 +185,7 @@ InequalityExpression infers Expression:
     AdditiveExpression ({infer InequalityExpressionRule.left=current} pairs+=InequalityTrailingPair)*;
 
 InequalityTrailingPair:
-    LessThanEqualTrailingPair | LessThanTrailingPair | GreaterThanEqualTrailingPair | GreaterThanTrailingPair;
+    LessThanTrailingPair | LessThanEqualTrailingPair | GreaterThanTrailingPair | GreaterThanEqualTrailingPair;
 
 LessThanEqualTrailingPair:
     '<=' right=AdditiveExpression;
@@ -292,8 +296,9 @@ TypeQualifier returns string:
 AttributedTypeName:
     name=QualifiedName;
 
+// Use a different rule for template specifications to avoid conflicts with comparison operators
 TemplateSpecSuffix:
-    '<' (arguments=TypeArgumentList)? '>';
+    'template_start' (arguments=TypeArgumentList)? 'template_end';
 
 TypeArgumentList:
     arguments+=TypeSpecification (',' arguments+=TypeSpecification)* ','?;
@@ -318,6 +323,8 @@ terminal LPAR: '(';
 terminal RPAR: ')';
 terminal LSQB: '[';
 terminal RSQB: ']';
+
+
 
 // Name with soft keywords
 Name returns string:

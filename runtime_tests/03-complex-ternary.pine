@@ -1,0 +1,12 @@
+//@version=5
+indicator("Complex Ternary Test")
+
+// Basic variables
+a = 10
+b = 5
+
+// Complex ternary operator with comparison
+result = a > b ? 1 : -1
+
+// Plot the result
+plot(result, "Result", color=color.blue)

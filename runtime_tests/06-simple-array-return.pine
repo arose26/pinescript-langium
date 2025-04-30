@@ -1,0 +1,13 @@
+//@version=5
+indicator("Simple Array Return Test")
+
+// Create a function that returns an array
+create_array() =>
+    [1, 2, 3, 4, 5]
+
+// Call the function and destructure the result
+[a, b, c, d, e] = create_array()
+
+// Plot some values
+plot(a, "First value", color=color.blue)
+plot(c, "Middle value", color=color.green)

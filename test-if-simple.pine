@@ -1,0 +1,10 @@
+// Test file for if statement
+
+// Simple if statement
+testIf(a, b) =>
+    if a > b
+        a + b
+    a - b
+
+// Test usage
+var result = testIf(10, 20)

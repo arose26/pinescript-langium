@@ -1,0 +1,12 @@
+//@version=5
+indicator("Inequality Test")
+
+// Simple inequality test
+value = 5
+
+if value < 10
+    result = "less than 10"
+else
+    result = "not less than 10"
+
+plot(1, "Result: " + result, color=color.blue)

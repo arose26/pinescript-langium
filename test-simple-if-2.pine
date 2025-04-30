@@ -1,0 +1,13 @@
+//@version=5
+indicator("Simple If Test")
+
+// Simple if statement
+value = 5
+
+// Use a simple if statement
+if value == 5
+    result = "equals 5"
+else
+    result = "not equals 5"
+
+plot(1, "Result: " + result, color=color.blue)

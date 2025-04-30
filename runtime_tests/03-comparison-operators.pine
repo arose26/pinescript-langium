@@ -1,0 +1,18 @@
+//@version=5
+indicator("Comparison Operators Test")
+
+// Basic variables
+a = 10
+b = 5
+
+// Comparison operators
+greater = a > b       // true
+less = a < b          // false
+equal = a == b        // false
+not_equal = a != b    // true
+greater_equal = a >= b // true
+less_equal = a <= b   // false
+
+// Plot the results (convert boolean to number for plotting)
+plot(greater ? 1 : 0, "Greater", color=color.blue)
+plot(not_equal ? 1 : 0, "Not Equal", color=color.red)

@@ -1,0 +1,8 @@
+//@version=5
+indicator("Simple Named Ternary Test")
+
+// Simple condition
+condition = true
+
+// Plot with ternary in named argument
+plot(1, "Test", color=condition ? color.green : color.red)

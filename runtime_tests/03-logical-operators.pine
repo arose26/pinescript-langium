@@ -1,0 +1,16 @@
+//@version=5
+indicator("Logical Operators Test")
+
+// Basic variables
+a = true
+b = false
+
+// Logical operators
+and_result = a and b  // false
+or_result = a or b    // true
+not_result = not a    // false
+
+// Plot the results (convert boolean to number for plotting)
+plot(and_result ? 1 : 0, "AND", color=color.blue)
+plot(or_result ? 1 : 0, "OR", color=color.green)
+plot(not_result ? 1 : 0, "NOT", color=color.red)

@@ -1,0 +1,18 @@
+//@version=5
+indicator("Simple Array Test")
+
+// Simple array
+arr = array.new_int(3, 0)
+array.set(arr, 0, 10)
+array.set(arr, 1, 20)
+array.set(arr, 2, 30)
+
+// Get values from array
+val1 = array.get(arr, 0)
+val2 = array.get(arr, 1)
+val3 = array.get(arr, 2)
+
+// Plot the values
+plot(val1, "Value 1", color=color.blue)
+plot(val2, "Value 2", color=color.green)
+plot(val3, "Value 3", color=color.red)

@@ -1,0 +1,13 @@
+//@version=5
+indicator("While Loop with Continue Test")
+
+// While loop with continue
+counter = 0
+sum = 0
+while counter < 10
+    counter := counter + 1
+    if counter % 2 == 0  // Skip even numbers
+        continue
+    sum := sum + counter
+
+plot(sum, "Sum of odd numbers 1-9", color=color.green)

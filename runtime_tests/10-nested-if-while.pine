@@ -1,0 +1,16 @@
+//@version=5
+indicator("While Loop with Nested If Test")
+
+// While loop with nested if
+counter = 0
+sum = 0
+while counter < 10
+    counter := counter + 1
+    if counter % 3 == 0
+        sum := sum + counter * 2  // Double the value for multiples of 3
+    if counter % 3 != 0 and counter % 2 == 0
+        sum := sum + counter  // Normal value for even numbers
+    if counter % 3 != 0 and counter % 2 != 0
+        sum := sum + counter / 2  // Half the value for odd numbers that aren't multiples of 3
+
+plot(sum, "Sum with special rules", color=color.purple)

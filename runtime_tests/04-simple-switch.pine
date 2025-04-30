@@ -1,0 +1,15 @@
+//@version=5
+indicator("Simple Switch Test")
+
+// Simple switch statement
+value = 2
+result = 0
+
+switch value
+    1 => result := 10
+    2 => result := 20
+    3 => result := 30
+    => result := -1  // Default case
+
+// Plot the result
+plot(result, "Result", color=color.blue)

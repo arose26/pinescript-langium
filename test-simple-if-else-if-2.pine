@@ -1,0 +1,16 @@
+//@version=5
+indicator("Simple If-Else-If Test 2")
+
+// Simple if-else-if statement
+value = 2
+
+if value == 1
+    result = "one"
+else if value == 2
+    result = "two"
+else if value == 3
+    result = "three"
+else
+    result = "other"
+
+plot(1, "Result: " + result, color=color.blue)

@@ -1,0 +1,26 @@
+//@version=5
+indicator("Persistent Variables Test")
+
+// Regular variable (resets every bar)
+regular_counter = 1
+
+// Persistent variable (keeps value across bars)
+var persistent_counter = 0
+persistent_counter := persistent_counter + 1
+
+// Conditional initialization
+var condition_met = false
+if close > open and not condition_met
+    condition_met := true
+
+// Fibonacci sequence using persistent variables
+var fib = 1
+var prev_fib = 0
+next_fib = fib + prev_fib
+prev_fib := fib
+fib := next_fib
+
+// Plot the results
+plot(regular_counter, "Regular Counter", color=color.blue)
+plot(persistent_counter, "Persistent Counter", color=color.red)
+plot(fib, "Fibonacci", color=color.green)

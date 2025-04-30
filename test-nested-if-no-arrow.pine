@@ -1,0 +1,9 @@
+// Test file for nested if-else statement without arrow function
+
+// Nested if-else statement
+if 10 > 20
+    var result = 10 + 20
+else if 10 < 20
+    var result = 10 - 20
+else
+    var result = 10 * 20

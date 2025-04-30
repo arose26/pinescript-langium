@@ -1,0 +1,5 @@
+// Test file for simple if statement
+
+// Simple if statement
+if 10 > 20
+    var result = "a"

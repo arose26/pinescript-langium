@@ -1,0 +1,7 @@
+// Test file for arrow function syntax
+
+// Simple arrow function
+simpleFunc(a, b) => a + b
+
+// Test usage
+var result = simpleFunc(10, 20)

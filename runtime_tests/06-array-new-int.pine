@@ -1,0 +1,12 @@
+//@version=5
+indicator("Array New Int Test")
+
+// Create a new array with 5 elements, initialized to 0
+arr = array.new_int(5)
+
+// Create a new array with 3 elements, initialized to 10
+arr2 = array.new_int(3, 10)
+
+// Plot the first element of each array
+plot(arr[0], "Array 1 Element 0", color=color.blue)
+plot(arr2[0], "Array 2 Element 0", color=color.green)

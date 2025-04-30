@@ -1,0 +1,11 @@
+//@version=5
+indicator("Simple Ternary Test")
+
+// Basic variable
+condition = true
+
+// Simple ternary operator
+result = condition ? 1 : 0
+
+// Plot the result
+plot(result, "Result", color=color.blue)

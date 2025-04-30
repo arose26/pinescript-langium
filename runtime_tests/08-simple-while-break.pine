@@ -1,0 +1,13 @@
+//@version=5
+indicator("Simple While Loop with Break Test")
+
+// While loop with break
+counter = 0
+sum = 0
+while true
+    sum := sum + counter
+    counter := counter + 1
+    if counter >= 5
+        break
+
+plot(sum, "Sum 0-4", color=color.red)

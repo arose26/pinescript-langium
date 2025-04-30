@@ -1,0 +1,11 @@
+//@version=5
+indicator("Simple Ternary Test")
+
+// Simple condition
+condition = true
+
+// Simple ternary
+result = condition ? 1 : -1
+
+// Plot the result
+plot(result, "Result")

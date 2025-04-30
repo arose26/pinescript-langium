@@ -1,0 +1,14 @@
+//@version=5
+indicator("Ternary Operator Test")
+
+// Basic variables
+a = 10
+b = 5
+
+// Ternary operator
+result1 = a > b ? 1 : -1  // 1
+result2 = a < b ? 1 : -1  // -1
+
+// Plot the results
+plot(result1, "Result 1", color=color.green)
+plot(result2, "Result 2", color=color.red)

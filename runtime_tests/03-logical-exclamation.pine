@@ -1,0 +1,11 @@
+//@version=5
+indicator("Logical Exclamation Test")
+
+// Basic variable
+a = true
+
+// Logical NOT operator using exclamation mark
+result = !a  // false
+
+// Plot the result (convert boolean to number for plotting)
+plot(result ? 1 : 0, "Result", color=color.red)

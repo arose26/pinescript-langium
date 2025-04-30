@@ -1,0 +1,12 @@
+//@version=5
+indicator("Logical AND Test")
+
+// Basic variables
+a = true
+b = false
+
+// Logical AND operator
+result = a and b  // false
+
+// Plot the result (convert boolean to number for plotting)
+plot(result ? 1 : 0, "Result", color=color.blue)

@@ -49,7 +49,9 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             pattern: /</,
             line_breaks: false,
             start_chars_hint: ['<'],
-            group: 'comparison'
+            group: 'comparison',
+            // Add longer_alt to ensure it's matched correctly
+            longer_alt: lessThanEqual
         });
 
         const greaterThan = createToken({
@@ -57,7 +59,9 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             pattern: />/,
             line_breaks: false,
             start_chars_hint: ['>'],
-            group: 'comparison'
+            group: 'comparison',
+            // Add longer_alt to ensure it's matched correctly
+            longer_alt: greaterThanEqual
         });
 
         // Add custom tokens to the token dictionary
@@ -71,6 +75,29 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             tokenDict['>='] = greaterThanEqual;
             tokenDict['<'] = lessThan;
             tokenDict['>'] = greaterThan;
+
+            // Make sure the tokens are properly configured
+            tokenDict['<'].PATTERN = /</;
+            tokenDict['>'].PATTERN = />/;
+            tokenDict['<='].PATTERN = /<=/;
+            tokenDict['>='].PATTERN = />=/;
+
+            // Prioritize comparison operators over template specifications
+            // This is crucial for resolving conflicts between comparison operators and template specifications
+            if (tokenDict['<']) {
+                tokenDict['<'].CATEGORIES = ['comparison'];
+                tokenDict['<'].categoryMatches = ['comparison'];
+                tokenDict['<'].categoryMatchesMap = { comparison: true };
+            }
+            if (tokenDict['>']) {
+                tokenDict['>'].CATEGORIES = ['comparison'];
+                tokenDict['>'].categoryMatches = ['comparison'];
+                tokenDict['>'].categoryMatchesMap = { comparison: true };
+            }
+
+            // Debug the token dictionary
+            console.log('Token dictionary keys:', Object.keys(tokenDict));
+            console.log('LessThan token:', tokenDict['<']);
         }
 
         return tokens;

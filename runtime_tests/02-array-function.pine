@@ -1,0 +1,20 @@
+//@version=5
+indicator("Array Function Test")
+
+// Function that returns an array
+get_array() =>
+    [10, 20, 30]
+
+// Call the function
+arr = get_array()
+
+// Access elements
+first = arr[0]    // 10
+second = arr[1]   // 20
+third = arr[2]    // 30
+
+// Calculate sum
+sum = first + second + third  // 10 + 20 + 30 = 60
+
+// Plot the results
+plot(sum, "Sum", color=color.blue)

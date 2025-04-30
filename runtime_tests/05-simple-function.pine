@@ -1,0 +1,12 @@
+//@version=5
+indicator("Simple Function Test")
+
+// Simple function
+add(a, b) =>
+    a + b
+
+// Call the function
+result = add(10, 5)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

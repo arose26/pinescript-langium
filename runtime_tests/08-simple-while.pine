@@ -1,0 +1,16 @@
+//@version=5
+indicator("Simple While Loop Test")
+
+// Simple while loop with maximum iterations
+counter = 0
+sum = 0
+max_iterations = 10
+iteration_count = 0
+
+while counter < 10 and iteration_count < max_iterations
+    sum := sum + counter
+    counter := counter + 1
+    iteration_count := iteration_count + 1
+
+// Plot the results
+plot(sum, "Sum 0-9", color=color.blue)

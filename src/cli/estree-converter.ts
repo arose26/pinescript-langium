@@ -14,10 +14,6 @@ import {
     SimpleNameInitialization,
     SimpleReassignment,
     IfStructure,
-    SimpleIfStructure,
-    IfElseStructure,
-    IfElseIfStructure,
-    ElseBlock,
     ForStructure,
     ForStructureTo,
     ForStructureIn,
@@ -77,14 +73,10 @@ export class PineScriptToESTreeConverter {
                 return this.convertSimpleReassignment(ast as SimpleReassignment);
             case 'IfStructure':
                 return this.convertIfStructure(ast as IfStructure);
-            case 'SimpleIfStructure':
-                return this.convertSimpleIfStructure(ast as SimpleIfStructure);
-            case 'IfElseStructure':
-                return this.convertIfElseStructure(ast as IfElseStructure);
-            case 'IfElseIfStructure':
-                return this.convertIfElseIfStructure(ast as IfElseIfStructure);
-            case 'ElseBlock':
-                return this.convertElseBlock(ast as ElseBlock);
+            case 'ElseIfClause':
+                return this.convertElseIfClause(ast as any);
+            case 'ElseClause':
+                return this.convertElseClause(ast as any);
             case 'ForStructure':
                 return this.convertForStructure(ast as ForStructure);
             case 'ForStructureTo':
@@ -284,6 +276,8 @@ export class PineScriptToESTreeConverter {
      * Convert a PrimaryExpressionSubscript node to an ESTree MemberExpression node
      */
     convertPrimaryExpressionSubscript(node: PrimaryExpressionSubscript): any {
+        // For simplicity, we'll just handle the first expression in the slice
+        // This handles array subscripts like array[index]
         return {
             type: 'MemberExpression',
             object: this.convert(node.expression),
@@ -388,88 +382,89 @@ export class PineScriptToESTreeConverter {
      * Convert an IfStructure node to an ESTree IfStatement node
      */
     convertIfStructure(node: IfStructure): any {
-        if (node.$type === 'SimpleIfStructure') {
-            return this.convertSimpleIfStructure(node as SimpleIfStructure);
-        } else if (node.$type === 'IfElseStructure') {
-            return this.convertIfElseStructure(node as IfElseStructure);
-        } else if (node.$type === 'IfElseIfStructure') {
-            return this.convertIfElseIfStructure(node as IfElseIfStructure);
+        // Create block statement for the then block
+        const consequent = {
+            type: 'BlockStatement',
+            body: this.convertStatementsToBody(node.thenBlock)
+        };
+
+        // Handle the else block
+        let alternate = null;
+
+        // Cast to any to access properties that might not be in the interface
+        const nodeAny = node as any;
+
+        // Check for ElseIfClause
+        if (nodeAny.ElseIfClause) {
+            alternate = this.convert(nodeAny.ElseIfClause);
+        }
+        // Check for elseIfBlock (nested if in else clause)
+        else if (nodeAny.elseIfBlock) {
+            // If it's an elseIfBlock, convert it to an IfStatement
+            alternate = this.convertIfStructure(nodeAny.elseIfBlock);
+        }
+        // Check for ElseClause
+        else if (nodeAny.ElseClause) {
+            alternate = this.convert(nodeAny.ElseClause);
+        }
+        // Check for elseBlock (regular else clause)
+        else if (nodeAny.elseBlock) {
+            // If it's an elseBlock, convert it to a BlockStatement
+            alternate = {
+                type: 'BlockStatement',
+                body: this.convertStatementsToBody(nodeAny.elseBlock)
+            };
         }
 
-        // Fallback
-        return {
-            type: 'IfStatement',
-            test: { type: 'Literal', value: true },
-            consequent: { type: 'BlockStatement', body: [] },
-            alternate: null
-        };
-    }
-
-    /**
-     * Convert a SimpleIfStructure node to an ESTree IfStatement node
-     */
-    convertSimpleIfStructure(node: SimpleIfStructure): any {
         return {
             type: 'IfStatement',
             test: this.convert(node.condition),
-            consequent: {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.thenBlock)
-            },
-            alternate: null
+            consequent,
+            alternate
         };
     }
 
     /**
-     * Convert an IfElseStructure node to an ESTree IfStatement node
+     * Convert an ElseIfClause node to an ESTree IfStatement node
      */
-    convertIfElseStructure(node: IfElseStructure): any {
+    convertElseIfClause(node: any): any {
+        // Create block statement for the then block
+        const consequent = {
+            type: 'BlockStatement',
+            body: this.convertStatementsToBody(node.thenBlock)
+        };
+
+        // Handle the else block
+        let alternate = null;
+
+        // Check for nested ElseIfClause
+        if (node.ElseIfClause) {
+            alternate = this.convert(node.ElseIfClause);
+        }
+        // Check for ElseClause
+        else if (node.ElseClause) {
+            alternate = this.convert(node.ElseClause);
+        }
+
         return {
             type: 'IfStatement',
             test: this.convert(node.condition),
-            consequent: {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.thenBlock)
-            },
-            alternate: {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.elseBlock)
-            }
+            consequent,
+            alternate
         };
     }
 
     /**
-     * Convert an IfElseIfStructure node to an ESTree IfStatement node
+     * Convert an ElseClause node to an ESTree BlockStatement node
      */
-    convertIfElseIfStructure(node: IfElseIfStructure): any {
-        return {
-            type: 'IfStatement',
-            test: this.convert(node.condition),
-            consequent: {
-                type: 'BlockStatement',
-                body: this.convertStatementsToBody(node.thenBlock)
-            },
-            alternate: {
-                type: 'IfStatement',
-                test: this.convert(node.elifCondition),
-                consequent: {
-                    type: 'BlockStatement',
-                    body: this.convertStatementsToBody(node.elifBlock)
-                },
-                alternate: null
-            }
-        };
-    }
-
-    /**
-     * Convert an ElseBlock node to an ESTree BlockStatement node
-     */
-    convertElseBlock(node: ElseBlock): any {
+    convertElseClause(node: any): any {
         return {
             type: 'BlockStatement',
-            body: this.convertStatementsToBody(node.block)
+            body: this.convertStatementsToBody(node.elseBlock)
         };
     }
+
+
 
     /**
      * Convert a LocalBlock to an array of ESTree statements
@@ -735,22 +730,33 @@ export class PineScriptToESTreeConverter {
         const pair = node.pairs[0];
         let operator = '>';
 
+        // Debug the pair type
+        console.log('Inequality pair type:', pair.$type);
+
         if (pair.$type === 'LessThanTrailingPair') {
             operator = '<';
+            console.log('Setting operator to <');
         } else if (pair.$type === 'LessThanEqualTrailingPair') {
             operator = '<=';
+            console.log('Setting operator to <=');
         } else if (pair.$type === 'GreaterThanTrailingPair') {
             operator = '>';
+            console.log('Setting operator to >');
         } else if (pair.$type === 'GreaterThanEqualTrailingPair') {
             operator = '>=';
+            console.log('Setting operator to >=');
         }
 
-        return {
+        // Create the binary expression
+        const result = {
             type: 'BinaryExpression',
             operator,
             left: this.convert(node.left),
             right: this.convert(pair.right)
         };
+
+        console.log('Created binary expression:', JSON.stringify(result, null, 2));
+        return result;
     }
 
     /**

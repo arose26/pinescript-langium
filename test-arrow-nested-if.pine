@@ -1,0 +1,13 @@
+// Test file for arrow function with nested if-else
+
+// Arrow function with nested if-else
+testNestedIfElse(a, b) =>
+    if a > b
+        a + b
+    else if a < b
+        a - b
+    else
+        a * b
+
+// Test usage
+var result = testNestedIfElse(10, 20)
