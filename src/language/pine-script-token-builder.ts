@@ -19,51 +19,54 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
      */
     override buildTokens(grammar: any, options: any) {
         const tokens = super.buildTokens(grammar, options);
-        
+
         // Define custom tokens for comparison operators
+        // Order matters! Define longer patterns first to avoid conflicts
         const lessThanEqual = createToken({
             name: 'LessThanEqual',
-            pattern: /<=/, 
+            pattern: /<=/,
             line_breaks: false,
             start_chars_hint: ['<'],
             group: 'comparison'
         });
-        
-        const lessThan = createToken({
-            name: 'LessThan',
-            pattern: /</, 
-            line_breaks: false,
-            start_chars_hint: ['<'],
-            group: 'comparison'
-        });
-        
+
         const greaterThanEqual = createToken({
             name: 'GreaterThanEqual',
-            pattern: />=/, 
+            pattern: />=/,
             line_breaks: false,
             start_chars_hint: ['>'],
             group: 'comparison'
         });
-        
+
+        const lessThan = createToken({
+            name: 'LessThan',
+            pattern: /</,
+            line_breaks: false,
+            start_chars_hint: ['<'],
+            group: 'comparison'
+        });
+
         const greaterThan = createToken({
             name: 'GreaterThan',
-            pattern: />/, 
+            pattern: />/,
             line_breaks: false,
             start_chars_hint: ['>'],
             group: 'comparison'
         });
-        
+
         // Add custom tokens to the token dictionary
         if (Array.isArray(tokens)) {
-            return [...tokens, lessThanEqual, lessThan, greaterThanEqual, greaterThan];
+            // Order matters! Add longer patterns first
+            return [...tokens, lessThanEqual, greaterThanEqual, lessThan, greaterThan];
         } else if (tokens && typeof tokens === 'object') {
             const tokenDict = tokens as Record<string, any>;
+            // Order matters! Add longer patterns first
             tokenDict['<='] = lessThanEqual;
-            tokenDict['<'] = lessThan;
             tokenDict['>='] = greaterThanEqual;
+            tokenDict['<'] = lessThan;
             tokenDict['>'] = greaterThan;
         }
-        
+
         return tokens;
     }
 }

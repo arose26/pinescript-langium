@@ -10,7 +10,7 @@ This project aims to provide a Langium-based parser for PineScript, the scriptin
 
 - Indentation-aware parsing
 - Support for PineScript syntax
-- JavaScript code generation
+- JavaScript code generation via ESTree
 - Array support (experimental)
 
 ## Known Issues
@@ -82,6 +82,22 @@ npm run build
 node test-simple.js
 ```
 
+### Converting PineScript to JavaScript
+
+You can convert PineScript code to JavaScript using the ESTree converter:
+
+```bash
+npm run estree examples/simple/test-estree.pine
+```
+
+Or directly:
+
+```bash
+node --loader ts-node/esm src/cli/estree-cli.ts examples/simple/test-estree.pine
+```
+
+This will generate a JavaScript file with the same name as the input file but with a `.js` extension.
+
 ## Roadmap
 
 - Fix issues with the less than operator
@@ -89,3 +105,4 @@ node test-simple.js
 - Add support for more advanced language features
 - Improve error recovery and error messages
 - Add comprehensive testing with a wider variety of PineScript code
+- Enhance the ESTree converter to support more PineScript features

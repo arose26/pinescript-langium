@@ -1,0 +1,25 @@
+//@version=5
+
+// This script demonstrates the module system
+import utils/math
+import utils/indicators
+
+// Define a function that uses imported modules
+export myIndicator(length) =>
+    sma = ta.sma(close, length)
+    upper = sma + ta.stdev(close, length) * 2
+    lower = sma - ta.stdev(close, length) * 2
+    [sma, upper, lower]
+
+// Use the function
+[midLine, upperBand, lowerBand] = myIndicator(20)
+
+// Create a map to store settings
+var settings = map.new()
+map.put(settings, "length", 20)
+map.put(settings, "multiplier", 2)
+
+// Plot the bands
+plot(midLine, "Middle", color.blue)
+plot(upperBand, "Upper", color.green)
+plot(lowerBand, "Lower", color.red)

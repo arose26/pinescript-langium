@@ -2,13 +2,14 @@ grammar PineScript
 
 // Entry point
 entry StartScript:
-    (NEWLINE | COMMENT)* (statements=Statements)? NEWLINE*;
+    (NEWLINE | COMMENT)* (version=VERSION_ANNOTATION (NEWLINE | COMMENT)*)?
+    statements=Statements?;
 
-// Version annotation is handled as a special comment
+// Version annotation is handled at the beginning of the script
 
 // Statements
 Statements:
-    statements+=Statement (NEWLINE+ statements+=Statement)* NEWLINE*;
+    statements+=Statement ((NEWLINE | COMMENT)+ statements+=Statement)* (NEWLINE | COMMENT)*;
 
 Statement:
     FunctionDeclaration | CompoundStatement | SimpleStatement;
@@ -19,7 +20,7 @@ CompoundStatement:
 
 // Simple statements
 SimpleStatement:
-    (SimpleAssignment | ExpressionStatement | ImportStatement | BreakStatement | ContinueStatement);
+    (SimpleAssignment | ExpressionStatement | BreakStatement | ContinueStatement | ImportStatement);
 
 // Compound assignments
 CompoundAssignment:
@@ -42,7 +43,7 @@ CompoundAugAssignment:
 
 // Function declaration
 FunctionDeclaration:
-    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR '=>' body=LocalBlock;
+    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR ('=>' body=LocalBlock | NEWLINE? INDENT body=Statements DEDENT);
 
 ParameterList:
     parameters+=ParameterDefinition (',' parameters+=ParameterDefinition)* ','?;
@@ -214,7 +215,10 @@ UnaryExpression infers Expression:
 PrimaryExpression infers Expression:
     AtomicExpression ({infer PrimaryExpressionAttribute.expression=current} '.' attribute=NameLoad |
                       {infer PrimaryExpressionCall.expression=current} (templateSpec=TemplateSpecSuffix)? LPAR (arguments=ArgumentList)? RPAR |
+                      {infer PrimaryExpressionMethodCall.expression=current} '.' method=NameLoad LPAR (arguments=ArgumentList)? RPAR |
                       {infer PrimaryExpressionSubscript.expression=current} LSQB slice=SubscriptSlice RSQB)*;
+
+
 
 ArgumentList:
     arguments+=ArgumentDefinition (',' arguments+=ArgumentDefinition)* ','?;
@@ -321,7 +325,7 @@ terminal RSQB: ']';
 
 // Name with soft keywords
 Name returns string:
-    NAME | 'type' | 'method' | 'const' | 'input' | 'simple' | 'series' |
+    NAME | 'type' | 'method' | 'const' | 'simple' | 'series' |
     // Built-in library namespaces
     'ta' | 'math' | 'color' | 'str' | 'array' | 'map' | 'barstate' | 'request' | 'input';
 
@@ -337,5 +341,4 @@ terminal COMMENT: /\/\/[^\n\r]*/;
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 
 // Version annotation - matches //@version=X
-// We'll handle this as a special comment for now
-// terminal VERSION_ANNOTATION: /\/\/@version=[0-9]+/;
+terminal VERSION_ANNOTATION: /\/\/@version=[0-9]+/;

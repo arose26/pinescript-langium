@@ -1,0 +1,6 @@
+//@version=5
+
+// This script demonstrates version annotation
+var x = 10
+var y = 20
+var sum = x + y

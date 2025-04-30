@@ -1,0 +1,17 @@
+// Simple test script for ESTree conversion
+var a = 1
+var b = 2
+var c = a + b
+
+if c > 2
+    c := c + 1
+else
+    c := c - 1
+
+// Function definition
+f(x) =>
+    y = x * 2
+    y + 1
+
+// Using the function
+var result = f(c)

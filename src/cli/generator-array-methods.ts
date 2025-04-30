@@ -9,7 +9,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
 
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
-        
+
         // Array methods and properties
         Array.prototype.size = function() { return this.length; };
         Array.prototype.push_back = function(value) { this.push(value); return this; };
@@ -17,7 +17,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         Array.prototype.insert = function(index, value) { this.splice(index, 0, value); return this; };
         Array.prototype.remove = function(index) { this.splice(index, 1); return this; };
         Array.prototype.clear = function() { this.length = 0; return this; };
-        Array.prototype.fill = function(value, size) { 
+        Array.prototype.fill = function(value, size) {
             this.length = 0;
             for (let i = 0; i < size; i++) {
                 this.push(value);
@@ -39,7 +39,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         Array.prototype.every = function(callback) { return Array.prototype.every.call(this, callback); };
         Array.prototype.find = function(callback) { return Array.prototype.find.call(this, callback); };
         Array.prototype.findIndex = function(callback) { return Array.prototype.findIndex.call(this, callback); };
-        
+
         ${generateStatements(script)}
     `;
 
@@ -52,13 +52,19 @@ function generateStatements(script: StartScript): string {
     if (!script.statements) {
         return '';
     }
-    
+
     return script.statements.statements.map(statement => {
         if (statement.$type === 'FunctionDeclaration') {
             const params = statement.parameters?.parameters.map((p: any) => p.name).join(', ') || '';
-            const body = statement.body.$type === 'IndentedLocalBlock' 
-                ? generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript)
-                : generateStatement(statement.body.statement);
+            let body = '';
+            if (statement.body.$type === 'IndentedLocalBlock') {
+                body = generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript);
+            } else if (statement.body.$type === 'InlineLocalBlock') {
+                body = generateStatement(statement.body.statement);
+            } else {
+                // It's a Statements object
+                body = generateStatements({ $type: 'StartScript', statements: statement.body } as StartScript);
+            }
             return `function ${statement.name}(${params}) {
                 ${body}
             }`;
@@ -99,13 +105,13 @@ function generateStructure(structure: unknown): string {
     if (typeof structure === 'object' && structure !== null) {
         const typedStructure = structure as { $type: string };
         if (typedStructure.$type === 'IfStructureElse') {
-            const ifStruct = structure as { 
-                condition: unknown, 
-                thenBlock: { statements: unknown[] }, 
-                elseBlock?: { block: { statements: unknown[] } } 
+            const ifStruct = structure as {
+                condition: unknown,
+                thenBlock: { statements: unknown[] },
+                elseBlock?: { block: { statements: unknown[] } }
             };
             const thenBlock = ifStruct.thenBlock.statements.map((s: any) => generateStatement(s)).join('\n');
-            const elseBlock = ifStruct.elseBlock 
+            const elseBlock = ifStruct.elseBlock
                 ? ifStruct.elseBlock.block.statements.map((s: any) => generateStatement(s)).join('\n')
                 : '';
             return `if (${generateExpression(ifStruct.condition)}) {
@@ -225,7 +231,7 @@ function generateExpression(expression: unknown): string {
             // Handle array methods and properties
             const expr = generateExpression(attrExpr.expression);
             const attr = attrExpr.attribute;
-            
+
             // Map PineScript array methods to JavaScript
             if (attr === 'size') {
                 return `${expr}.size()`;

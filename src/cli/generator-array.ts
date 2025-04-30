@@ -9,7 +9,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
 
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
-        
+
         ${generateStatements(script)}
     `;
 
@@ -22,13 +22,19 @@ function generateStatements(script: StartScript): string {
     if (!script.statements) {
         return '';
     }
-    
+
     return script.statements.statements.map(statement => {
         if (statement.$type === 'FunctionDeclaration') {
             const params = statement.parameters?.parameters.map((p: any) => p.name).join(', ') || '';
-            const body = statement.body.$type === 'IndentedLocalBlock' 
-                ? generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript)
-                : generateStatement(statement.body.statement);
+            let body = '';
+            if (statement.body.$type === 'IndentedLocalBlock') {
+                body = generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript);
+            } else if (statement.body.$type === 'InlineLocalBlock') {
+                body = generateStatement(statement.body.statement);
+            } else {
+                // It's a Statements object
+                body = generateStatements({ $type: 'StartScript', statements: statement.body } as StartScript);
+            }
             return `function ${statement.name}(${params}) {
                 ${body}
             }`;
@@ -69,13 +75,13 @@ function generateStructure(structure: unknown): string {
     if (typeof structure === 'object' && structure !== null) {
         const typedStructure = structure as { $type: string };
         if (typedStructure.$type === 'IfStructureElse') {
-            const ifStruct = structure as { 
-                condition: unknown, 
-                thenBlock: { statements: unknown[] }, 
-                elseBlock?: { block: { statements: unknown[] } } 
+            const ifStruct = structure as {
+                condition: unknown,
+                thenBlock: { statements: unknown[] },
+                elseBlock?: { block: { statements: unknown[] } }
             };
             const thenBlock = ifStruct.thenBlock.statements.map((s: any) => generateStatement(s)).join('\n');
-            const elseBlock = ifStruct.elseBlock 
+            const elseBlock = ifStruct.elseBlock
                 ? ifStruct.elseBlock.block.statements.map((s: any) => generateStatement(s)).join('\n')
                 : '';
             return `if (${generateExpression(ifStruct.condition)}) {

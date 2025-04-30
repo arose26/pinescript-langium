@@ -12,21 +12,21 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
     console.log(`Generating JavaScript for ${filePath}`);
     console.log(`Output file: ${generatedFilePath}`);
     console.log(`Script AST type: ${script.$type}`);
-    
+
     // Dump the script object to console
     console.log('Script object:');
     console.log(JSON.stringify(script, null, 2));
-    
+
     if (!script.statements) {
         console.log('No statements found in the script');
         return generatedFilePath;
     }
-    
+
     console.log(`Number of statements: ${script.statements.statements.length}`);
-    
+
     const fileContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
-        
+
         // Array methods and properties
         Array.prototype.size = function() { return this.length; };
         Array.prototype.push_back = function(value) { this.push(value); return this; };
@@ -34,7 +34,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         Array.prototype.insert = function(index, value) { this.splice(index, 0, value); return this; };
         Array.prototype.remove = function(index) { this.splice(index, 1); return this; };
         Array.prototype.clear = function() { this.length = 0; return this; };
-        Array.prototype.fill = function(value, size) { 
+        Array.prototype.fill = function(value, size) {
             this.length = 0;
             for (let i = 0; i < size; i++) {
                 this.push(value);
@@ -56,7 +56,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         Array.prototype.every = function(callback) { return Array.prototype.every.call(this, callback); };
         Array.prototype.find = function(callback) { return Array.prototype.find.call(this, callback); };
         Array.prototype.findIndex = function(callback) { return Array.prototype.findIndex.call(this, callback); };
-        
+
         ${generateStatements(script)}
     `;
 
@@ -72,16 +72,22 @@ function generateStatements(script: StartScript): string {
     if (!script.statements) {
         return '';
     }
-    
+
     return script.statements.statements.map(statement => {
         console.log(`Processing statement of type: ${statement.$type}`);
         console.log(JSON.stringify(statement, null, 2));
-        
+
         if (statement.$type === 'FunctionDeclaration') {
             const params = statement.parameters?.parameters.map((p: any) => p.name).join(', ') || '';
-            const body = statement.body.$type === 'IndentedLocalBlock' 
-                ? generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript)
-                : generateStatement(statement.body.statement);
+            let body = '';
+            if (statement.body.$type === 'IndentedLocalBlock') {
+                body = generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript);
+            } else if (statement.body.$type === 'InlineLocalBlock') {
+                body = generateStatement(statement.body.statement);
+            } else {
+                // It's a Statements object
+                body = generateStatements({ $type: 'StartScript', statements: statement.body } as StartScript);
+            }
             return `function ${statement.name}(${params}) {
                 ${body}
             }`;
@@ -103,7 +109,7 @@ function generateStatement(statement: unknown): string {
         const typedStatement = statement as { $type: string };
         console.log(`Processing inner statement of type: ${typedStatement.$type}`);
         console.log(JSON.stringify(statement, null, 2));
-        
+
         if (typedStatement.$type === 'SimpleNameInitialization') {
             const init = statement as { declaration: { name: string }, expression: unknown };
             return `let ${init.declaration.name} = ${generateExpression(init.expression)};`;
@@ -126,15 +132,15 @@ function generateStructure(structure: unknown): string {
         const typedStructure = structure as { $type: string };
         console.log(`Processing structure of type: ${typedStructure.$type}`);
         console.log(JSON.stringify(structure, null, 2));
-        
+
         if (typedStructure.$type === 'IfStructureElse') {
-            const ifStruct = structure as { 
-                condition: unknown, 
-                thenBlock: { statements: unknown[] }, 
-                elseBlock?: { block: { statements: unknown[] } } 
+            const ifStruct = structure as {
+                condition: unknown,
+                thenBlock: { statements: unknown[] },
+                elseBlock?: { block: { statements: unknown[] } }
             };
             const thenBlock = ifStruct.thenBlock.statements.map((s: any) => generateStatement(s)).join('\n');
-            const elseBlock = ifStruct.elseBlock 
+            const elseBlock = ifStruct.elseBlock
                 ? ifStruct.elseBlock.block.statements.map((s: any) => generateStatement(s)).join('\n')
                 : '';
             return `if (${generateExpression(ifStruct.condition)}) {
@@ -195,7 +201,7 @@ function generateAssignmentTarget(target: unknown): string {
         const typedTarget = target as { $type: string };
         console.log(`Processing assignment target of type: ${typedTarget.$type}`);
         console.log(JSON.stringify(target, null, 2));
-        
+
         if (typedTarget.$type === 'AssignmentTargetName') {
             return (target as { name: string }).name;
         } else if (typedTarget.$type === 'AssignmentTargetAttribute') {
@@ -217,7 +223,7 @@ function generateExpression(expression: unknown): string {
         const typedExpr = expression as { $type: string };
         console.log(`Processing expression of type: ${typedExpr.$type}`);
         console.log(JSON.stringify(expression, null, 2));
-        
+
         if (typedExpr.$type === 'LiteralNumber') {
             return (expression as { value: number }).value.toString();
         } else if (typedExpr.$type === 'LiteralString') {
@@ -261,7 +267,7 @@ function generateExpression(expression: unknown): string {
             // Handle array methods and properties
             const expr = generateExpression(attrExpr.expression);
             const attr = attrExpr.attribute;
-            
+
             // Map PineScript array methods to JavaScript
             if (attr === 'size') {
                 return `${expr}.size()`;

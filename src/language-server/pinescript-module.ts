@@ -1,12 +1,17 @@
-import { createDefaultCoreModule, createDefaultSharedCoreModule, DefaultSharedCoreModuleContext, Module, inject } from 'langium';
+import { createDefaultCoreModule, createDefaultSharedCoreModule, DefaultSharedCoreModuleContext, Module, inject, LangiumDocument } from 'langium';
 import { IndentationAwareTokenBuilder, IndentationAwareLexer, LangiumCoreServices, LangiumSharedCoreServices, PartialLangiumCoreServices } from 'langium';
 import { PinescriptGeneratedModule } from './generated/module.js';
+import { parseImports, ImportStatement } from './import-parser.js';
+import { StartScript } from './generated/ast.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
  */
 export type PinescriptAddedServices = {
     // Add your custom services here
+    importParser: {
+        parseImports: (document: LangiumDocument) => ImportStatement[];
+    }
 }
 
 /**
@@ -33,6 +38,9 @@ export const PinescriptModule: Module<PinescriptServices, PartialLangiumCoreServ
             ]
         }),
         Lexer: (services) => new IndentationAwareLexer(services)
+    },
+    importParser: {
+        parseImports: (document: LangiumDocument) => parseImports(document as LangiumDocument<StartScript>)
     }
 };
 
