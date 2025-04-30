@@ -1,8 +1,0 @@
-// Test file for array literals
-
-// Array function
-testArray() =>
-    [1, 2, 3]
-
-// Test usage
-var result = testArray()

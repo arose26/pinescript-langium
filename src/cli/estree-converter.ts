@@ -19,6 +19,10 @@ import {
     ForStructureIn,
     WhileStructure,
     FunctionDeclaration,
+    // These types are used in type assertions
+    // ArrowFunctionExpression,
+    // ArrowFunctionBlock,
+    // RegularFunction,
     ArrayExpression,
     ExpressionStatement,
     BreakStatement,
@@ -41,79 +45,116 @@ export class PineScriptToESTreeConverter {
      */
     convert(ast: AstNode): any {
         if (!ast) {
+            console.warn('Null node passed to convert');
             return null;
         }
 
-        switch (ast.$type) {
-            case 'StartScript':
-                return this.convertProgram(ast as StartScript);
-            case 'BinaryExpression':
-                return this.convertBinaryExpression(ast as BinaryExpression);
-            case 'UnaryExpression':
-                return this.convertUnaryExpression(ast as UnaryExpression);
-            case 'LiteralNumber':
-                return this.convertLiteralNumber(ast as LiteralNumber);
-            case 'LiteralString':
-                return this.convertLiteralString(ast as LiteralString);
-            case 'LiteralBool':
-                return this.convertLiteralBool(ast as LiteralBool);
-            case 'NameReference':
-                return this.convertNameReference(ast as NameReference);
-            case 'PrimaryExpressionCall':
-                return this.convertPrimaryExpressionCall(ast as PrimaryExpressionCall);
-            case 'PrimaryExpressionAttribute':
-                return this.convertPrimaryExpressionAttribute(ast as PrimaryExpressionAttribute);
-            case 'PrimaryExpressionSubscript':
-                return this.convertPrimaryExpressionSubscript(ast as PrimaryExpressionSubscript);
-            case 'PrimaryExpressionMethodCall':
-                return this.convertPrimaryExpressionMethodCall(ast as PrimaryExpressionMethodCall);
-            case 'SimpleNameInitialization':
-                return this.convertSimpleNameInitialization(ast as SimpleNameInitialization);
-            case 'SimpleReassignment':
-                return this.convertSimpleReassignment(ast as SimpleReassignment);
-            case 'IfStructure':
-                return this.convertIfStructure(ast as IfStructure);
-            case 'ElseIfClause':
-                return this.convertElseIfClause(ast as any);
-            case 'ElseClause':
-                return this.convertElseClause(ast as any);
-            case 'ForStructure':
-                return this.convertForStructure(ast as ForStructure);
-            case 'ForStructureTo':
-                return this.convertForStructure(ast as ForStructureTo);
-            case 'ForStructureIn':
-                return this.convertForStructure(ast as ForStructureIn);
-            case 'WhileStructure':
-                return this.convertWhileStructure(ast as WhileStructure);
-            case 'FunctionDeclaration':
-                return this.convertFunctionDeclaration(ast as FunctionDeclaration);
-            case 'ArrayExpression':
-                return this.convertArrayExpression(ast as ArrayExpression);
-            case 'ExpressionStatement':
-                return this.convertExpressionStatement(ast as ExpressionStatement);
-            case 'BreakStatement':
-                return this.convertBreakStatement(ast as BreakStatement);
-            case 'ContinueStatement':
-                return this.convertContinueStatement(ast as ContinueStatement);
-            case 'StructureStatement':
-                return this.convertStructureStatement(ast as StructureStatement);
-            case 'AssignmentTargetName':
-                return this.convertAssignmentTargetName(ast as AssignmentTargetName);
-            case 'InequalityExpressionRule':
-                return this.convertInequalityExpressionRule(ast as InequalityExpressionRule);
-            case 'EqualityExpressionRule':
-                return this.convertEqualityExpressionRule(ast as EqualityExpressionRule);
-            case 'ConditionalExpressionRule':
-                return this.convertConditionalExpressionRule(ast as ConditionalExpressionRule);
-            // ReturnStatement is not part of our AST yet
-            // case 'ReturnStatement':
-            //    return this.convertReturnStatement(ast as ReturnStatement);
-            default:
-                console.warn(`Unsupported AST node type: ${ast.$type}`);
-                return {
-                    type: 'Unknown',
-                    originalType: ast.$type
-                };
+        if (!ast.$type) {
+            console.warn('Node has no $type property:', ast);
+            return null;
+        }
+
+        try {
+            // Log the node type for debugging
+            console.log(`Converting node of type: ${ast.$type}`);
+
+            // Log the node structure for debugging
+            console.log('Node structure:', JSON.stringify(ast, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+
+            switch (ast.$type) {
+                case 'StartScript':
+                    return this.convertProgram(ast as StartScript);
+                case 'BinaryExpression':
+                    return this.convertBinaryExpression(ast as BinaryExpression);
+                case 'UnaryExpression':
+                    return this.convertUnaryExpression(ast as UnaryExpression);
+                case 'LiteralNumber':
+                    return this.convertLiteralNumber(ast as LiteralNumber);
+                case 'LiteralString':
+                    return this.convertLiteralString(ast as LiteralString);
+                case 'LiteralBool':
+                    return this.convertLiteralBool(ast as LiteralBool);
+                case 'NameReference':
+                    return this.convertNameReference(ast as NameReference);
+                case 'PrimaryExpressionCall':
+                    return this.convertPrimaryExpressionCall(ast as PrimaryExpressionCall);
+                case 'PrimaryExpressionAttribute':
+                    return this.convertPrimaryExpressionAttribute(ast as PrimaryExpressionAttribute);
+                case 'PrimaryExpressionSubscript':
+                    return this.convertPrimaryExpressionSubscript(ast as PrimaryExpressionSubscript);
+                case 'PrimaryExpressionMethodCall':
+                    return this.convertPrimaryExpressionMethodCall(ast as PrimaryExpressionMethodCall);
+                case 'SimpleNameInitialization':
+                    return this.convertSimpleNameInitialization(ast as SimpleNameInitialization);
+                case 'SimpleReassignment':
+                    return this.convertSimpleReassignment(ast as SimpleReassignment);
+                case 'IfStructure':
+                    return this.convertIfStructure(ast as IfStructure);
+                case 'ElseIfClause':
+                    return this.convertElseIfClause(ast as any);
+                case 'ElseClause':
+                    return this.convertElseClause(ast as any);
+                case 'ForStructure':
+                    return this.convertForStructure(ast as ForStructure);
+                case 'ForStructureTo':
+                    return this.convertForStructure(ast as ForStructureTo);
+                case 'ForStructureIn':
+                    return this.convertForStructure(ast as ForStructureIn);
+                case 'WhileStructure':
+                    return this.convertWhileStructure(ast as WhileStructure);
+                case 'FunctionDeclaration':
+                case 'ArrowFunctionExpression':
+                case 'ArrowFunctionBlock':
+                case 'RegularFunction':
+                    return this.convertFunctionDeclaration(ast as FunctionDeclaration);
+                case 'ArrayExpression':
+                    return this.convertArrayExpression(ast as ArrayExpression);
+                case 'ExpressionStatement':
+                    return this.convertExpressionStatement(ast as ExpressionStatement);
+                case 'BreakStatement':
+                    return this.convertBreakStatement(ast as BreakStatement);
+                case 'ContinueStatement':
+                    return this.convertContinueStatement(ast as ContinueStatement);
+                case 'StructureStatement':
+                    return this.convertStructureStatement(ast as StructureStatement);
+                case 'AssignmentTargetName':
+                    return this.convertAssignmentTargetName(ast as AssignmentTargetName);
+                case 'InequalityExpressionRule':
+                    return this.convertInequalityExpressionRule(ast as InequalityExpressionRule);
+                case 'EqualityExpressionRule':
+                    return this.convertEqualityExpressionRule(ast as EqualityExpressionRule);
+                case 'ConditionalExpressionRule':
+                    return this.convertConditionalExpressionRule(ast as ConditionalExpressionRule);
+                // ReturnStatement is not part of our AST yet
+                // case 'ReturnStatement':
+                //    return this.convertReturnStatement(ast as ReturnStatement);
+                default:
+                    console.warn(`Unsupported AST node type: ${ast.$type}`);
+                    // Return a minimal valid node to avoid errors
+                    return {
+                        type: 'EmptyStatement'
+                    };
+            }
+        } catch (error) {
+            console.error(`Error converting node of type ${ast.$type}:`, error);
+            console.error('Node:', JSON.stringify(ast, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+
+            // Return a minimal valid node to avoid errors
+            return {
+                type: 'EmptyStatement'
+            };
         }
     }
 
@@ -121,7 +162,31 @@ export class PineScriptToESTreeConverter {
      * Convert a StartScript node to an ESTree Program node
      */
     convertProgram(node: StartScript): any {
-        const body = node.statements?.statements.map(stmt => this.convert(stmt)) || [];
+        console.log('Converting StartScript to Program');
+
+        // Avoid circular references by not logging the entire node
+        console.log('StartScript has statements:', !!node.statements);
+        if (node.statements) {
+            console.log('Statements count:', node.statements.statements?.length || 0);
+        }
+
+        let body: any[] = [];
+
+        try {
+            if (node.statements && node.statements.statements) {
+                body = node.statements.statements.map(stmt => {
+                    try {
+                        return this.convert(stmt);
+                    } catch (error) {
+                        console.error('Error converting statement type:', stmt.$type);
+                        return null;
+                    }
+                }).filter(stmt => stmt !== null);
+            }
+        } catch (error) {
+            console.error('Error converting statements:', error);
+        }
+
         return {
             type: 'Program',
             body,
@@ -455,9 +520,27 @@ export class PineScriptToESTreeConverter {
     }
 
     /**
-     * Convert an ElseClause node to an ESTree BlockStatement node
+     * Convert an ElseClause node to an ESTree BlockStatement or IfStatement node
      */
     convertElseClause(node: any): any {
+        // Check if this is actually an if-else structure
+        if (node.condition && node.thenBlock) {
+            // This is actually an if statement with an else clause
+            return {
+                type: 'IfStatement',
+                test: this.convert(node.condition),
+                consequent: {
+                    type: 'BlockStatement',
+                    body: this.convertStatementsToBody(node.thenBlock)
+                },
+                alternate: node.elseBlock ? {
+                    type: 'BlockStatement',
+                    body: this.convertStatementsToBody(node.elseBlock)
+                } : null
+            };
+        }
+
+        // Regular else clause
         return {
             type: 'BlockStatement',
             body: this.convertStatementsToBody(node.elseBlock)
@@ -468,19 +551,146 @@ export class PineScriptToESTreeConverter {
 
     /**
      * Convert a LocalBlock to an array of ESTree statements
+     * This method handles various block types that can appear in functions, arrow functions,
+     * and other structures.
+     *
+     * @param block The block to convert
+     * @returns An array of ESTree statements
      */
     convertStatementsToBody(block: any): any[] {
-        if (block.$type === 'IndentedLocalBlock') {
-            return block.statements.statements.map((stmt: any) => this.convert(stmt));
-        } else if (block.$type === 'InlineLocalBlock') {
-            return [this.convert(block.statement)];
-        } else if (block.statements && Array.isArray(block.statements)) {
-            return block.statements.map((stmt: any) => this.convert(stmt));
-        } else if (block.statements && block.statements.statements && Array.isArray(block.statements.statements)) {
-            return block.statements.statements.map((stmt: any) => this.convert(stmt));
-        }
+        console.log('Converting statements to body, block type:', block?.$type || 'undefined');
 
-        return [];
+        try {
+            // Handle null or undefined blocks
+            if (!block) {
+                console.log('Block is null or undefined');
+                return [];
+            }
+
+            // Handle different types of blocks based on their $type
+            switch (block.$type) {
+                case 'IndentedLocalBlock':
+                    console.log('Block is IndentedLocalBlock');
+                    if (block.statements?.statements && Array.isArray(block.statements.statements)) {
+                        return block.statements.statements
+                            .map((stmt: any) => {
+                                try {
+                                    return this.convert(stmt);
+                                } catch (error: any) {
+                                    console.error('Error converting statement in IndentedLocalBlock:', error);
+                                    throw new Error(`Failed to convert statement in IndentedLocalBlock: ${error?.message || String(error)}`);
+                                }
+                            })
+                            .filter((stmt: any) => stmt !== null);
+                    }
+                    console.log('IndentedLocalBlock has no statements');
+                    return [];
+
+                case 'InlineLocalBlock':
+                    console.log('Block is InlineLocalBlock');
+                    if (block.statement) {
+                        try {
+                            return [this.convert(block.statement)];
+                        } catch (error: any) {
+                            console.error('Error converting statement in InlineLocalBlock:', error);
+                            throw new Error(`Failed to convert statement in InlineLocalBlock: ${error?.message || String(error)}`);
+                        }
+                    }
+                    console.log('InlineLocalBlock has no statement');
+                    return [];
+
+                case 'Statements':
+                    console.log('Block is Statements');
+                    if (block.statements && Array.isArray(block.statements)) {
+                        return block.statements
+                            .map((stmt: any) => {
+                                try {
+                                    return this.convert(stmt);
+                                } catch (error: any) {
+                                    console.error('Error converting statement in Statements:', error);
+                                    throw new Error(`Failed to convert statement in Statements: ${error?.message || String(error)}`);
+                                }
+                            })
+                            .filter((stmt: any) => stmt !== null);
+                    }
+
+                    // Handle the case where statements is an object with a statements array
+                    if (block.statements?.statements && Array.isArray(block.statements.statements)) {
+                        return block.statements.statements
+                            .map((stmt: any) => {
+                                try {
+                                    return this.convert(stmt);
+                                } catch (error: any) {
+                                    console.error('Error converting statement in Statements.statements:', error);
+                                    throw new Error(`Failed to convert statement in Statements.statements: ${error?.message || String(error)}`);
+                                }
+                            })
+                            .filter((stmt: any) => stmt !== null);
+                    }
+
+                    console.log('Statements has no valid statements array');
+                    return [];
+
+                default:
+                    // Handle cases where the block doesn't have a specific $type but has statements
+
+                    // Case 1: block has a direct statements array
+                    if (block.statements && Array.isArray(block.statements)) {
+                        console.log('Block has direct statements array');
+                        return block.statements
+                            .map((stmt: any) => {
+                                try {
+                                    return this.convert(stmt);
+                                } catch (error: any) {
+                                    console.error('Error converting statement in direct statements array:', error);
+                                    throw new Error(`Failed to convert statement in direct statements array: ${error?.message || String(error)}`);
+                                }
+                            })
+                            .filter((stmt: any) => stmt !== null);
+                    }
+
+                    // Case 2: block has a statements object with a statements array
+                    if (block.statements?.statements && Array.isArray(block.statements.statements)) {
+                        console.log('Block has nested statements.statements array');
+                        return block.statements.statements
+                            .map((stmt: any) => {
+                                try {
+                                    return this.convert(stmt);
+                                } catch (error: any) {
+                                    console.error('Error converting statement in nested statements.statements array:', error);
+                                    throw new Error(`Failed to convert statement in nested statements.statements array: ${error?.message || String(error)}`);
+                                }
+                            })
+                            .filter((stmt: any) => stmt !== null);
+                    }
+
+                    // Case 3: block itself is a statement
+                    if (block.$type && !block.statements) {
+                        console.log('Block appears to be a single statement with type:', block.$type);
+                        try {
+                            return [this.convert(block)];
+                        } catch (error: any) {
+                            console.error('Error converting single statement block:', error);
+                            throw new Error(`Failed to convert single statement block: ${error?.message || String(error)}`);
+                        }
+                    }
+            }
+
+            // If we reach here, we couldn't handle the block
+            console.log('Block structure:', JSON.stringify(block, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+
+            console.log('Block does not match any known pattern');
+            throw new Error(`Unknown block type: ${block.$type || 'undefined'}`);
+        } catch (error: any) {
+            console.error('Error in convertStatementsToBody:', error);
+            throw new Error(`Failed to convert statements to body: ${error?.message || String(error)}`);
+        }
     }
 
     /**
@@ -614,48 +824,167 @@ export class PineScriptToESTreeConverter {
 
     /**
      * Convert a FunctionDeclaration node to an ESTree FunctionDeclaration node
+     * This method handles both regular functions and arrow functions with different body types.
+     *
+     * @param node The FunctionDeclaration node to convert
+     * @returns An ESTree FunctionDeclaration node
      */
     convertFunctionDeclaration(node: FunctionDeclaration): any {
-        const params = node.parameters?.parameters.map(param => ({
-            type: 'Identifier',
-            name: param.name
-        })) || [];
+        console.log('Converting function declaration:', node.name, 'of type:', node.$type);
 
-        let bodyStatements = [];
-
-        // If it has a returnExpr, create a return statement with it
-        if (node.returnExpr) {
-            bodyStatements = [
-                {
-                    type: 'ReturnStatement',
-                    argument: this.convert(node.returnExpr)
+        try {
+            // Extract parameters with proper error handling
+            const params: Array<{type: string, name: string}> = [];
+            try {
+                if (node.parameters?.parameters) {
+                    for (const param of node.parameters.parameters) {
+                        params.push({
+                            type: 'Identifier',
+                            name: param.name
+                        });
+                    }
                 }
-            ];
-        }
-        // If it's an inline block, we need to add a return statement
-        else if (node.body?.$type === 'InlineLocalBlock') {
-            bodyStatements = [
-                {
-                    type: 'ReturnStatement',
-                    argument: this.convert(node.body.statement)
-                }
-            ];
-        } else if (node.body) {
-            bodyStatements = this.convertStatementsToBody(node.body);
-        }
-
-        return {
-            type: 'FunctionDeclaration',
-            id: {
-                type: 'Identifier',
-                name: node.name
-            },
-            params,
-            body: {
-                type: 'BlockStatement',
-                body: bodyStatements
+            } catch (error: any) {
+                console.error('Error extracting parameters:', error);
+                console.log('Parameters structure:', JSON.stringify(node.parameters, null, 2));
+                // Continue with empty params rather than failing
             }
-        };
+
+            let bodyStatements: Array<{type: string, [key: string]: any}> = [];
+
+            // Handle different function types based on the AST node type
+            switch (node.$type) {
+                case 'ArrowFunctionExpression':
+                    // Arrow function with simple expression
+                    console.log('Processing ArrowFunctionExpression with returnExpr');
+                    try {
+                        const arrowNode = node as any; // Type assertion to access returnExpr
+                        const returnExprConverted = this.convert(arrowNode.returnExpr);
+                        if (returnExprConverted) {
+                            bodyStatements = [
+                                {
+                                    type: 'ReturnStatement',
+                                    argument: returnExprConverted
+                                }
+                            ];
+                        } else {
+                            console.warn('Failed to convert returnExpr, using empty return');
+                            bodyStatements = [
+                                {
+                                    type: 'ReturnStatement',
+                                    argument: null
+                                }
+                            ];
+                        }
+                    } catch (error: any) {
+                        console.error('Error converting arrow function expression:', error);
+                        throw new Error(`Failed to convert arrow function expression: ${error?.message || String(error)}`);
+                    }
+                    break;
+
+                case 'ArrowFunctionBlock':
+                case 'RegularFunction':
+                    // Arrow function with block or regular function
+                    console.log(`Processing ${node.$type} with body`);
+                    try {
+                        const funcWithBody = node as any; // Type assertion to access body
+                        if (funcWithBody.body) {
+                            // Get the statements from the body
+                            const statements = this.convertStatementsToBody(funcWithBody.body);
+
+                            if (statements.length > 0) {
+                                // Make a copy of the statements array to avoid modifying the original
+                                bodyStatements = [...statements];
+
+                                // For arrow functions, convert the last expression statement to a return statement
+                                if (node.$type === 'ArrowFunctionBlock') {
+                                    const lastStatement = bodyStatements[bodyStatements.length - 1];
+
+                                    // If the last statement is an expression statement, convert it to a return statement
+                                    if (lastStatement && lastStatement.type === 'ExpressionStatement') {
+                                        const returnStatement = {
+                                            type: 'ReturnStatement',
+                                            argument: lastStatement.expression
+                                        };
+
+                                        // Replace the last statement with a return statement
+                                        bodyStatements[bodyStatements.length - 1] = returnStatement;
+                                    }
+                                }
+                            }
+                        } else {
+                            console.warn(`${node.$type} has no body, using empty body`);
+                        }
+                    } catch (error: any) {
+                        console.error(`Error converting ${node.$type} body:`, error);
+                        throw new Error(`Failed to convert function body: ${error?.message || String(error)}`);
+                    }
+                    break;
+
+                default:
+                    // Handle legacy or unknown function types
+                    console.log('Processing function with unknown or legacy type:', node.$type);
+
+                    // Try to handle returnExpr if it exists (for backward compatibility)
+                    if ((node as any).returnExpr) {
+                        try {
+                            const returnExprConverted = this.convert((node as any).returnExpr);
+                            if (returnExprConverted) {
+                                bodyStatements = [
+                                    {
+                                        type: 'ReturnStatement',
+                                        argument: returnExprConverted
+                                    }
+                                ];
+                            }
+                        } catch (error: any) {
+                            console.error('Error converting legacy returnExpr:', error);
+                        }
+                    }
+                    // Try to handle body if it exists (for backward compatibility)
+                    else if ((node as any).body) {
+                        try {
+                            const statements = this.convertStatementsToBody((node as any).body);
+                            bodyStatements = [...statements];
+                        } catch (error: any) {
+                            console.error('Error converting legacy body:', error);
+                        }
+                    } else {
+                        console.warn('Function has neither returnExpr nor body');
+                    }
+                    break;
+            }
+
+            // Create the function declaration with proper error handling
+            const functionDeclaration = {
+                type: 'FunctionDeclaration',
+                id: {
+                    type: 'Identifier',
+                    name: node.name || 'anonymous' // Provide a fallback name
+                },
+                params,
+                body: {
+                    type: 'BlockStatement',
+                    body: bodyStatements
+                },
+                generator: false,
+                expression: false,
+                async: false
+            };
+
+            console.log('Created function declaration:', JSON.stringify(functionDeclaration, null, 2));
+            return functionDeclaration;
+        } catch (error: any) {
+            console.error('Error in convertFunctionDeclaration:', error);
+            console.log('Function node structure:', JSON.stringify(node, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+            throw new Error(`Failed to convert function declaration: ${error?.message || String(error)}`);
+        }
     }
 
 
@@ -705,7 +1034,26 @@ export class PineScriptToESTreeConverter {
      */
     convertStructureStatement(node: StructureStatement): any {
         // A StructureStatement contains a structure, which can be an IfStructure, ForStructure, etc.
-        return this.convert(node.structure);
+        const structure = node.structure;
+
+        // Debug the structure type
+        console.log('Structure type:', structure.$type);
+        console.log('Structure:', JSON.stringify(structure, (key, value) => {
+            if (key === '$cstNode') return undefined;
+            if (key === '$container') return undefined;
+            if (key === '$containerProperty') return undefined;
+            if (key === '$containerIndex') return undefined;
+            return value;
+        }, 2));
+
+        // Handle if statements
+        if (structure.$type === 'IfStructure') {
+            return this.convertIfStructure(structure as IfStructure);
+        } else if (structure.$type === 'ElseClause') {
+            return this.convertElseClause(structure);
+        } else {
+            return this.convert(structure);
+        }
     }
 
     /**

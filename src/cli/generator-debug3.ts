@@ -80,13 +80,41 @@ function generateStatements(script: StartScript): string {
         if (statement.$type === 'FunctionDeclaration') {
             const params = statement.parameters?.parameters.map((p: any) => p.name).join(', ') || '';
             let body = '';
-            if (statement.body.$type === 'IndentedLocalBlock') {
-                body = generateStatements({ $type: 'StartScript', statements: statement.body.statements } as StartScript);
-            } else if (statement.body.$type === 'InlineLocalBlock') {
-                body = generateStatement(statement.body.statement);
-            } else {
-                // It's a Statements object
-                body = generateStatements({ $type: 'StartScript', statements: statement.body } as StartScript);
+            // Handle different function types based on the AST node type
+            const nodeType = (statement as any).$type;
+            if (nodeType === 'ArrowFunctionExpression') {
+                // Arrow function with simple expression
+                body = `return ${generateExpression((statement as any).returnExpr)};`;
+            }
+            else if (nodeType === 'ArrowFunctionBlock' || nodeType === 'RegularFunction') {
+                // Arrow function with block or regular function
+                const bodyObj = (statement as any).body;
+                if (bodyObj) {
+                    if (bodyObj.$type === 'IndentedLocalBlock' && bodyObj.statements) {
+                        body = generateStatements({ $type: 'StartScript', statements: bodyObj.statements } as StartScript);
+                    } else if (bodyObj.$type === 'InlineLocalBlock' && bodyObj.statement) {
+                        body = generateStatement(bodyObj.statement);
+                    } else if (bodyObj.statements) {
+                        // It's a Statements object
+                        body = generateStatements({ $type: 'StartScript', statements: bodyObj } as StartScript);
+                    }
+                }
+            }
+            else {
+                // Handle legacy function types (for backward compatibility)
+                if ((statement as any).returnExpr) {
+                    body = `return ${generateExpression((statement as any).returnExpr)};`;
+                } else if ((statement as any).body) {
+                    const legacyBody = (statement as any).body;
+                    if (legacyBody.$type === 'IndentedLocalBlock' && legacyBody.statements) {
+                        body = generateStatements({ $type: 'StartScript', statements: legacyBody.statements } as StartScript);
+                    } else if (legacyBody.$type === 'InlineLocalBlock' && legacyBody.statement) {
+                        body = generateStatement(legacyBody.statement);
+                    } else if (legacyBody.statements) {
+                        // It's a Statements object
+                        body = generateStatements({ $type: 'StartScript', statements: legacyBody } as StartScript);
+                    }
+                }
             }
             return `function ${statement.name}(${params}) {
                 ${body}

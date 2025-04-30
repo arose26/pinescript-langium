@@ -1,0 +1,23 @@
+// Test file for arrow functions
+
+// Simple arrow function with expression
+simpleArrow(x) => x * 2
+
+// Arrow function with block
+blockArrow(x) =>
+    y = x * 2
+    y + 1
+
+// Arrow function with complex block
+complexArrow(a, b) =>
+    sum = a + b
+    if sum > 10
+        sum := sum * 2
+    else
+        sum := sum / 2
+    sum
+
+// Using the functions
+var result1 = simpleArrow(5)
+var result2 = blockArrow(5)
+var result3 = complexArrow(7, 8)

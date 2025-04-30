@@ -26,8 +26,19 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
     override buildTokens(grammar: any, options: any) {
         const tokens = super.buildTokens(grammar, options);
 
-        // Define custom tokens for comparison operators
+        // Define custom tokens for comparison operators and arrow
         // Order matters! Define longer patterns first to avoid conflicts
+        // Define arrow token first to give it higher priority
+        const arrow = createToken({
+            name: 'ARROW',
+            pattern: /=>/,
+            line_breaks: false,
+            start_chars_hint: ['='],
+            group: 'operator',
+            categories: [{ name: 'operator' }],
+            // Set a higher priority for the arrow token
+        });
+
         const lessThanEqual = createToken({
             name: 'LessThanEqual',
             pattern: /<=/,
@@ -67,10 +78,11 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
         // Add custom tokens to the token dictionary
         if (Array.isArray(tokens)) {
             // Order matters! Add longer patterns first
-            return [...tokens, lessThanEqual, greaterThanEqual, lessThan, greaterThan];
+            return [...tokens, arrow, lessThanEqual, greaterThanEqual, lessThan, greaterThan];
         } else if (tokens && typeof tokens === 'object') {
             const tokenDict = tokens as Record<string, any>;
             // Order matters! Add longer patterns first
+            tokenDict['=>'] = arrow;
             tokenDict['<='] = lessThanEqual;
             tokenDict['>='] = greaterThanEqual;
             tokenDict['<'] = lessThan;
@@ -81,6 +93,16 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             tokenDict['>'].PATTERN = />/;
             tokenDict['<='].PATTERN = /<=/;
             tokenDict['>='].PATTERN = />=/;
+            tokenDict['=>'].PATTERN = /=>/;
+
+            // Ensure the arrow token has higher priority
+            if (tokenDict['=>']) {
+                tokenDict['=>'].CATEGORIES = ['operator'];
+                tokenDict['=>'].categoryMatches = ['operator'];
+                tokenDict['=>'].categoryMatchesMap = { operator: true };
+                // Set a higher priority for the arrow token
+                tokenDict['=>'].PRIORITY = 2;
+            }
 
             // Prioritize comparison operators over template specifications
             // This is crucial for resolving conflicts between comparison operators and template specifications

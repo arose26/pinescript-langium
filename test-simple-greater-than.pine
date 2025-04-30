@@ -1,8 +1,0 @@
-//@version=5
-indicator("Simple Greater Than Test")
-
-// Test less than operator
-var isLessThan = 5 < 10
-
-// Plot the result
-plot(1, "Result", color=color.blue)

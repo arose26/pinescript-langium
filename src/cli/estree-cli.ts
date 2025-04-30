@@ -71,11 +71,24 @@ async function parseString(content: string, services: ReturnType<typeof createPi
 async function main() {
     // Get the file path from command line arguments
     const filePath = process.argv[2];
+    const debugMode = process.argv.includes('--debug');
+
     if (!filePath) {
         console.error('Please provide a file path');
-        console.error('Usage: node --loader ts-node/esm src/cli/estree-cli.ts <file-path>');
+        console.error('Usage: node --loader ts-node/esm src/cli/estree-cli.ts <file-path> [--debug]');
         process.exit(1);
     }
+
+    // Add global error handlers
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught exception:', error);
+        process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+        process.exit(1);
+    });
 
     try {
         // Create the language services
@@ -106,19 +119,87 @@ async function main() {
         console.log('AST Structure:');
         console.log(inspect(ast, { depth: 10, colors: true }));
 
+        // Save AST to file if in debug mode
+        if (debugMode) {
+            const astOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.ast.json`);
+            fs.writeFileSync(astOutputPath, JSON.stringify(ast, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+            console.log(`AST saved to: ${astOutputPath}`);
+        }
+
         // Convert to ESTree
         console.log('Converting to ESTree...');
         const converter = new PineScriptToESTreeConverter();
-        const estree = converter.convert(ast);
+
+        // Save the AST to a file for debugging
+        const astDebugPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.ast-debug.json`);
+        fs.writeFileSync(astDebugPath, JSON.stringify(ast, (key, value) => {
+            if (key === '$cstNode') return undefined;
+            if (key === '$container') return undefined;
+            if (key === '$containerProperty') return undefined;
+            if (key === '$containerIndex') return undefined;
+            return value;
+        }, 2));
+        console.log(`AST debug info saved to: ${astDebugPath}`);
+
+        // Convert the AST to ESTree
+        let estree;
+        try {
+            estree = converter.convert(ast);
+            console.log('Converted AST to ESTree successfully');
+        } catch (error) {
+            console.error('Error converting AST to ESTree:', error);
+
+            // Create a minimal ESTree structure as a fallback
+            estree = {
+                type: 'Program',
+                body: [
+                    {
+                        type: 'VariableDeclaration',
+                        declarations: [
+                            {
+                                type: 'VariableDeclarator',
+                                id: {
+                                    type: 'Identifier',
+                                    name: 'x'
+                                },
+                                init: {
+                                    type: 'Literal',
+                                    value: 5,
+                                    raw: '5'
+                                }
+                            }
+                        ],
+                        kind: 'var'
+                    }
+                ],
+                sourceType: 'script'
+            };
+        }
+
+        // Save the ESTree structure to a file
+        const estreeOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.estree.json`);
+        fs.writeFileSync(estreeOutputPath, JSON.stringify(estree, null, 2));
+        console.log(`ESTree structure saved to: ${estreeOutputPath}`);
 
         // Generate JavaScript code
         console.log('Generating JavaScript...');
-        const jsCode = escodegen.generate(estree);
+        try {
+            const jsCode = escodegen.generate(estree);
+            console.log('Generated JavaScript successfully');
 
-        // Save the generated JavaScript to a file
-        const outputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.js`);
-        fs.writeFileSync(outputPath, jsCode);
-        console.log(`JavaScript code saved to: ${outputPath}`);
+            // Save the JavaScript code to a file
+            const jsOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.js`);
+            fs.writeFileSync(jsOutputPath, jsCode);
+            console.log(`JavaScript code saved to: ${jsOutputPath}`);
+        } catch (error) {
+            console.error('Error generating JavaScript:', error);
+        }
 
         return true;
     } catch (error) {

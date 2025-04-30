@@ -43,7 +43,13 @@ CompoundAugAssignment:
 
 // Function declaration
 FunctionDeclaration:
-    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR ('=>' (body=LocalBlock | returnExpr=Expression) | NEWLINE? INDENT body=Statements DEDENT);
+    export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR (
+        {infer ArrowFunctionExpression} '=>' returnExpr=Expression |
+        {infer ArrowFunctionBlock} '=>' NEWLINE INDENT body=Statements DEDENT |
+        {infer RegularFunction} NEWLINE INDENT body=Statements DEDENT
+    );
+
+
 
 ParameterList:
     parameters+=ParameterDefinition (',' parameters+=ParameterDefinition)* ','?;

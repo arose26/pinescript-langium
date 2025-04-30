@@ -149,6 +149,7 @@ We've successfully built a custom parser that works with our indentation preproc
    - Implement remaining advanced language features (see feature_list.md)
    - Improve error recovery and handling
 
+
 ### Left Recursion
 
 We've successfully handled left recursion in the grammar:
@@ -158,7 +159,9 @@ We've successfully handled left recursion in the grammar:
 
 ## Detailed Next Steps
 
-1. **Implement Advanced Language Features**:
+1. **Fix Arrow Function Handling**: Done
+
+2. **Implement Advanced Language Features**:
    - Implement features from feature_list.md in priority order
    - Start with Library/Module System and Built-in Functions
    - Add Type System support
@@ -170,37 +173,37 @@ We've successfully handled left recursion in the grammar:
    - Add Error Handling patterns
    - Implement Advanced Data Structures
 
-2. **Integrate with Langium Parser**:
+3. **Integrate with Langium Parser**:
    - Research Langium's document lifecycle and parser API in depth
    - Convert our tokens to Langium tokens
    - Integrate our AST builder with the Langium parser
    - Ensure compatibility with Langium's document model
 
-3. **Implement Error Recovery**:
+4. **Implement Error Recovery**:
    - Add custom error messages for indentation errors
    - Implement recovery strategies for common syntax errors
    - Test with intentionally malformed PineScript code
 
-4. **Comprehensive Testing**:
+5. **Comprehensive Testing**:
    - Create a test suite with various PineScript examples
    - Test different language constructs (expressions, statements, structures)
    - Test edge cases for indentation
    - Compare parsing results with the original ANTLR parser
    - Test with real-world PineScript examples from new-examples directory
 
-5. **Complete Documentation**:
+6. **Complete Documentation**:
    - Document the indentation handling approach
    - Provide detailed examples of grammar usage
    - Document any limitations or differences from the ANTLR grammar
    - Create a user guide for using the Langium grammar
    - Document all implemented features
 
-6. **Improve AST Builder**:
+7. **Improve AST Builder**:
    - Enhance expression handling (operators, parentheses, etc.)
    - Implement proper type checking and validation
    - Ensure the AST correctly represents all language constructs
 
-7. **Integration with IDE**:
+8. **Integration with IDE**:
    - Implement language server features (completion, hover, etc.)
    - Test integration with VS Code
    - Ensure proper syntax highlighting and error reporting

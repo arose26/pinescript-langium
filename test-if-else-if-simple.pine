@@ -1,9 +1,0 @@
-// Test file for if-else-if statement
-
-// If-else-if statement
-if 10 > 20
-    var result = "a"
-else
-    var result = "b"
-    if 10 < 20
-        var result = "c"
