@@ -1,0 +1,130 @@
+{
+  "type": "Program",
+  "body": [
+    {
+      "type": "ExpressionStatement",
+      "expression": {
+        "type": "CallExpression",
+        "callee": {
+          "type": "Identifier",
+          "name": "indicator"
+        },
+        "arguments": [
+          {
+            "type": "Literal",
+            "value": "Minimal Arrow Function",
+            "raw": "\"Minimal Arrow Function\""
+          },
+          {
+            "type": "ObjectExpression",
+            "properties": [
+              {
+                "type": "Property",
+                "key": {
+                  "type": "Identifier",
+                  "name": "overlay"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": false,
+                  "raw": "false"
+                },
+                "kind": "init",
+                "computed": false,
+                "method": false,
+                "shorthand": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "FunctionDeclaration",
+      "id": {
+        "type": "Identifier",
+        "name": "f"
+      },
+      "params": [],
+      "body": {
+        "type": "BlockStatement",
+        "body": [
+          {
+            "type": "ReturnStatement",
+            "argument": {
+              "type": "Literal",
+              "value": 1,
+              "raw": "1"
+            }
+          }
+        ]
+      },
+      "generator": false,
+      "expression": false,
+      "async": false
+    },
+    {
+      "type": "VariableDeclaration",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "id": {
+            "type": "Identifier",
+            "name": "y"
+          },
+          "init": {
+            "type": "CallExpression",
+            "callee": {
+              "type": "Identifier",
+              "name": "f"
+            },
+            "arguments": []
+          }
+        }
+      ],
+      "kind": "var"
+    },
+    {
+      "type": "ExpressionStatement",
+      "expression": {
+        "type": "CallExpression",
+        "callee": {
+          "type": "Identifier",
+          "name": "plot"
+        },
+        "arguments": [
+          {
+            "type": "Identifier",
+            "name": "y"
+          },
+          {
+            "type": "Literal",
+            "value": "Result",
+            "raw": "\"Result\""
+          },
+          {
+            "type": "ObjectExpression",
+            "properties": [
+              {
+                "type": "Property",
+                "key": {
+                  "type": "Identifier",
+                  "name": "color"
+                },
+                "value": {
+                  "type": "Identifier",
+                  "name": "color.blue"
+                },
+                "kind": "init",
+                "computed": false,
+                "method": false,
+                "shorthand": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "sourceType": "script"
+}

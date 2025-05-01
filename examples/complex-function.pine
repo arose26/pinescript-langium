@@ -1,0 +1,32 @@
+//@version=5
+indicator("Complex Function", overlay=false)
+
+// Complex function with multiple statements and nested if statements
+complexFunc(x=10, y=5, z=2) => 
+    result = 0
+    multiplier = 1
+    
+    if x > 5
+        multiplier := 2
+        if y > 3
+            if z > 1
+                result := x * y * z * multiplier
+            else
+                result := x * y * multiplier
+        else
+            result := x + y * multiplier
+    else
+        multiplier := 0.5
+        result := (x - y) * multiplier
+    
+    result
+
+// Use the function
+a = complexFunc(10, 5, 2)
+b = complexFunc(10, 2, 3)
+c = complexFunc(3, 5, 1)
+
+// Plot the results
+plot(a, "Result A", color=color.blue)
+plot(b, "Result B", color=color.red)
+plot(c, "Result C", color=color.green)

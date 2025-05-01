@@ -1,0 +1,13 @@
+//@version=5
+indicator("Arrow Function Example", overlay=false)
+
+// Arrow function example
+MaxMinNz(value, max=100, min=0, def=50) =>
+    nz(math.max(math.min(value, max), min), def)
+
+// Use the arrow function
+value = 75
+result = MaxMinNz(value)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

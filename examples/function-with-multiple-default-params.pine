@@ -1,0 +1,12 @@
+//@version=5
+indicator("Function with Multiple Default Parameters", overlay=false)
+
+// Function with multiple default parameters
+f(x=10, y=20) =>
+    x * y
+
+// Use the function
+z = f()
+
+// Plot the result
+plot(z, "Result", color=color.blue)

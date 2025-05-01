@@ -1,0 +1,13 @@
+//@version=5
+indicator("Array Destructuring Function Call", overlay=false)
+
+// Function that returns multiple values
+bbMethod(length, mult) =>
+    [middle, upper, lower] = ta.bb(close, length, mult)
+    ((close - lower) / (upper - lower)) * 100
+
+// Use the function
+result = bbMethod(20, 2)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

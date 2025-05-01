@@ -1,0 +1,12 @@
+//@version=5
+indicator("Function with Default Parameter", overlay=false)
+
+// Function with default parameter
+f(x=10) =>
+    x * 2
+
+// Use the function
+y = f()
+
+// Plot the result
+plot(y, "Result", color=color.blue)

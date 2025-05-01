@@ -1,0 +1,15 @@
+//@version=5
+indicator("Arrow Function with If and Variable", overlay=false)
+
+// Arrow function with if statement and variable
+f() =>
+    result = 0
+    if (true)
+        result := 1
+    result
+
+// Use the function
+y = f()
+
+// Plot the result
+plot(y, "Result", color=color.blue)

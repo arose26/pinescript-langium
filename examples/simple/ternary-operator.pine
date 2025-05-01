@@ -1,0 +1,21 @@
+// Test file for ternary operator in complex expressions
+
+// Simple ternary operator
+var result = condition ? valueIfTrue : valueIfFalse
+
+// Ternary operator in function arguments
+upper = ta.ema(ta.change(source) <= 0 ? 0 : stddev, lengthEma)
+lower = ta.ema(ta.change(source) > 0 ? 0 : stddev, lengthEma)
+
+// Nested ternary operators
+var color = price > prevPrice ? (price > highestPrice ? color.green : color.blue) : (price < lowestPrice ? color.red : color.yellow)
+
+// Ternary operator in array access
+var index = condition ? 0 : 1
+var value = array[index]
+
+// Ternary operator in method arguments
+plot(series=close, title="Close", color=close > open ? color.green : color.red)
+
+// Ternary operator with complex conditions
+var signal = (rsi > 70 and price > sma) ? 1 : (rsi < 30 and price < sma) ? -1 : 0

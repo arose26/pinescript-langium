@@ -1,0 +1,195 @@
+{
+  "$type": "StartScript",
+  "statements": {
+    "$type": "Statements",
+    "statements": [
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "indicator"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "If Statement Simple"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "overlay",
+                "expression": {
+                  "$type": "LiteralBool",
+                  "value": false
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "SimpleNameInitialization",
+        "declaration": {
+          "$type": "VariableDeclaration",
+          "name": "x"
+        },
+        "expression": {
+          "$type": "LiteralNumber",
+          "value": 10
+        }
+      },
+      {
+        "$type": "SimpleNameInitialization",
+        "declaration": {
+          "$type": "VariableDeclaration",
+          "name": "result"
+        },
+        "expression": {
+          "$type": "LiteralNumber",
+          "value": 0
+        }
+      },
+      {
+        "$type": "StructureStatement",
+        "structure": {
+          "$type": "ElseClause",
+          "elseBlock": {
+            "$type": "Statements",
+            "statements": [
+              {
+                "$type": "SimpleReassignment",
+                "target": {
+                  "$type": "AssignmentTargetName",
+                  "name": "result"
+                },
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "x"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "condition": {
+            "$type": "InequalityExpressionRule",
+            "left": {
+              "$type": "NameReference",
+              "name": {
+                "$type": "QualifiedName",
+                "parts": [
+                  "x"
+                ]
+              }
+            },
+            "pairs": [
+              {
+                "$type": "GreaterThanTrailingPair",
+                "right": {
+                  "$type": "LiteralNumber",
+                  "value": 5
+                }
+              }
+            ]
+          },
+          "thenBlock": {
+            "$type": "Statements",
+            "statements": [
+              {
+                "$type": "SimpleReassignment",
+                "target": {
+                  "$type": "AssignmentTargetName",
+                  "name": "result"
+                },
+                "expression": {
+                  "$type": "BinaryExpression",
+                  "left": {
+                    "$type": "NameReference",
+                    "name": {
+                      "$type": "QualifiedName",
+                      "parts": [
+                        "x"
+                      ]
+                    }
+                  },
+                  "operator": "*",
+                  "right": {
+                    "$type": "LiteralNumber",
+                    "value": 2
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "plot"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "result"
+                    ]
+                  }
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "Result"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "color",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "color",
+                      "blue"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

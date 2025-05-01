@@ -1963,6 +1963,197 @@ const globalFunctions: FunctionInfo[] = [
     }
 ];
 
+// Matrix namespace functions
+const matrixFunctions: FunctionInfo[] = [
+    {
+        name: 'new',
+        namespace: 'matrix',
+        description: 'Creates a new matrix (2D array)',
+        returnType: 'matrix<float>',
+        parameters: [
+            {
+                name: 'rows',
+                type: 'simple int',
+                description: 'Number of rows in the matrix'
+            },
+            {
+                name: 'cols',
+                type: 'simple int',
+                description: 'Number of columns in the matrix'
+            },
+            {
+                name: 'initial_value',
+                type: 'simple float',
+                description: 'Initial value for all elements',
+                optional: true,
+                defaultValue: '0.0'
+            }
+        ],
+        examples: [
+            'matrix.new(3, 3, 0)',
+            'matrix.new(5, 2, 1.0)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'rows',
+        namespace: 'matrix',
+        description: 'Returns the number of rows in a matrix',
+        returnType: 'simple int',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to get the number of rows from'
+            }
+        ],
+        examples: [
+            'matrix.rows(mat)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'cols',
+        namespace: 'matrix',
+        description: 'Returns the number of columns in a matrix',
+        returnType: 'simple int',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to get the number of columns from'
+            }
+        ],
+        examples: [
+            'matrix.cols(mat)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'get',
+        namespace: 'matrix',
+        description: 'Gets a value from a matrix at the specified row and column',
+        returnType: 'series float',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to get the value from'
+            },
+            {
+                name: 'row',
+                type: 'simple int',
+                description: 'Row index (0-based)'
+            },
+            {
+                name: 'col',
+                type: 'simple int',
+                description: 'Column index (0-based)'
+            }
+        ],
+        examples: [
+            'matrix.get(mat, 0, 0)',
+            'matrix.get(mat, i, j)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'set',
+        namespace: 'matrix',
+        description: 'Sets a value in a matrix at the specified row and column',
+        returnType: 'void',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to set the value in'
+            },
+            {
+                name: 'row',
+                type: 'simple int',
+                description: 'Row index (0-based)'
+            },
+            {
+                name: 'col',
+                type: 'simple int',
+                description: 'Column index (0-based)'
+            },
+            {
+                name: 'value',
+                type: 'series float',
+                description: 'Value to set'
+            }
+        ],
+        examples: [
+            'matrix.set(mat, 0, 0, 1.0)',
+            'matrix.set(mat, i, j, close)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'transpose',
+        namespace: 'matrix',
+        description: 'Transposes a matrix (swaps rows and columns)',
+        returnType: 'matrix<float>',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to transpose'
+            }
+        ],
+        examples: [
+            'matrix.transpose(mat)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'multiply',
+        namespace: 'matrix',
+        description: 'Multiplies two matrices',
+        returnType: 'matrix<float>',
+        parameters: [
+            {
+                name: 'matrix1',
+                type: 'matrix<float>',
+                description: 'First matrix'
+            },
+            {
+                name: 'matrix2',
+                type: 'matrix<float>',
+                description: 'Second matrix'
+            }
+        ],
+        examples: [
+            'matrix.multiply(mat1, mat2)'
+        ],
+        since: '5'
+    },
+    {
+        name: 'pca',
+        namespace: 'matrix',
+        description: 'Performs Principal Component Analysis (PCA) on a matrix',
+        returnType: 'matrix<float>',
+        parameters: [
+            {
+                name: 'matrix',
+                type: 'matrix<float>',
+                description: 'Matrix to perform PCA on'
+            },
+            {
+                name: 'components',
+                type: 'simple int',
+                description: 'Number of principal components to keep',
+                optional: true
+            }
+        ],
+        examples: [
+            'matrix.pca(mat, 2)'
+        ],
+        since: '5'
+    }
+];
+
 // Combine all function namespaces
 export const builtInFunctions: FunctionInfo[] = [
     ...taFunctions,
@@ -1971,6 +2162,7 @@ export const builtInFunctions: FunctionInfo[] = [
     ...inputFunctions,
     ...strFunctions,
     ...arrayFunctions,
+    ...matrixFunctions,
     ...mapFunctions,
     ...requestFunctions,
     ...tickerFunctions,

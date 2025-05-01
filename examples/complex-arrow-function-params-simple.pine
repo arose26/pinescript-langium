@@ -1,0 +1,15 @@
+//@version=5
+indicator("Complex Arrow Function Params Simple", overlay=false)
+
+// Arrow function with complex parameters
+isInBullDivergence(indicator, price=close, length=100, confirm=true, confLength=1) =>
+    isDiv = 0
+    confirmOffset = confirm ? confLength : 0
+    LL = indicator[0+confirmOffset]
+    isDiv
+
+// Use the function
+result = isInBullDivergence(close, length=50)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

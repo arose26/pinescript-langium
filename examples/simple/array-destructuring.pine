@@ -1,0 +1,13 @@
+// Test file for array destructuring
+
+// Simple array destructuring
+[a, b] = [1, 2]
+
+// Function call with array destructuring
+[middle, upper, lower] = ta.bb(close, 20, 2)
+
+// Method call with array destructuring
+[haclose, haopen] = request.security(ticker.heikinashi(syminfo.tickerid), '', [close, open])
+
+// Using destructured variables
+var result = middle + (upper - lower)

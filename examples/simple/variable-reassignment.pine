@@ -1,0 +1,29 @@
+// Test file for variable reassignment with := operator
+
+// Regular variable initialization
+var a = 10
+var b = 20
+
+// Variable reassignment with :=
+a := a + 5
+b := b * 2
+
+// Conditional reassignment
+if a > 15
+    a := a - 10
+else
+    a := a + 10
+
+// Reassignment in a function
+myFunc(x) =>
+    result = x * 2
+    if result > 10
+        result := result + 5
+    result
+
+// Reassignment in a loop
+for i = 0 to 5
+    if i % 2 == 0
+        a := a + i
+    else
+        b := b - i

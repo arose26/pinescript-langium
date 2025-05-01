@@ -1,0 +1,14 @@
+//@version=5
+indicator("If Statement Simple", overlay=false)
+
+// Simple if statement
+x = 10
+result = 0
+
+if x > 5
+    result := x * 2
+else
+    result := x
+
+// Plot the result
+plot(result, "Result", color=color.blue)

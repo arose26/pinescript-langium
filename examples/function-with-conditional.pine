@@ -1,0 +1,19 @@
+//@version=5
+indicator("Function with Conditional", overlay=false)
+
+// Function with conditional
+f(x=10) =>
+    result = 0
+    if x > 5
+        result := x * 2
+    else
+        result := x
+    result
+
+// Use the function
+y = f(3)
+z = f(10)
+
+// Plot the results
+plot(y, "Result Y", color=color.blue)
+plot(z, "Result Z", color=color.red)

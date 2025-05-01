@@ -12,7 +12,7 @@ Statements:
     statements+=Statement ((NEWLINE | COMMENT)+ statements+=Statement)* (NEWLINE | COMMENT)*;
 
 Statement:
-    FunctionDeclaration | CompoundStatement | SimpleStatement;
+    FunctionDeclaration | ArrowFunctionDeclaration | CompoundStatement | SimpleStatement;
 
 // Compound statements
 CompoundStatement:
@@ -49,6 +49,12 @@ FunctionDeclaration:
         {infer RegularFunction} NEWLINE INDENT body=Statements DEDENT
     );
 
+// Arrow function declaration
+ArrowFunctionDeclaration:
+    name=Name LPAR (parameters=ParameterList)? RPAR '=>' (
+        {infer ArrowFunctionExpressionDecl} returnExpr=Expression |
+        {infer ArrowFunctionBlockDecl} NEWLINE INDENT body=Statements DEDENT
+    );
 
 
 ParameterList:
@@ -149,6 +155,8 @@ SimpleNameInitialization:
 
 SimpleTupleInitialization:
     declaration=TupleDeclaration '=' expression=Expression;
+
+
 
 SimpleReassignment:
     target=AssignmentTarget ':=' expression=Expression;
@@ -336,7 +344,7 @@ terminal RSQB: ']';
 Name returns string:
     NAME | 'type' | 'method' | 'const' | 'simple' | 'series' |
     // Built-in library namespaces
-    'ta' | 'math' | 'color' | 'str' | 'array' | 'map' | 'barstate' | 'request' | 'input';
+    'ta' | 'math' | 'color' | 'str' | 'array' | 'matrix' | 'map' | 'barstate' | 'request' | 'input' | 'ticker' | 'syminfo';
 
 NameLoad returns string:
     Name;

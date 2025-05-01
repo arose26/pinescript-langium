@@ -1,0 +1,28 @@
+// Test file for input functions with named parameters
+
+// Simple input functions
+source = input.source(defval=close, title="Source", group="General Settings")
+timeframe = input.timeframe(defval="", title="Timeframe", group="General Settings")
+
+// Input with boolean
+display_input = input.bool(false, title="Display raw input indicators?", group="Display")
+display_output = input.bool(true, title="Display output indicators?", group="Display")
+
+// Input with integer
+offset = input.int(defval=-100, title="Offset raw input indicators", group="Display")
+
+// Input with string and options
+ncPCA = input.string('Centered Reduced', title='How to display all PCA indicators?', 
+                    options=['Centered Reduced','Original'], group='Display')
+
+// Input with float
+length = input.float(14, minval=1, maxval=100, step=1, title="RSI Length", group="Indicators")
+
+// Input with color
+upColor = input.color(color.green, title="Up Color", group="Colors")
+downColor = input.color(color.red, title="Down Color", group="Colors")
+
+// Using the inputs
+var rsi = ta.rsi(source, length)
+var signal = rsi > 70 ? -1 : rsi < 30 ? 1 : 0
+var signalColor = signal > 0 ? upColor : signal < 0 ? downColor : color.blue

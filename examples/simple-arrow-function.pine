@@ -1,0 +1,11 @@
+//@version=5
+indicator("Simple Arrow Function", overlay=false)
+
+// Simple arrow function
+f(x) => x * 2
+
+// Use the function
+y = f(10)
+
+// Plot the result
+plot(y, "Result", color=color.blue)

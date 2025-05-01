@@ -1,0 +1,14 @@
+//@version=5
+indicator("Multiline Arrow Function", overlay=false)
+
+// Multiline arrow function
+f() =>
+    a = 1
+    b = 2
+    a + b
+
+// Use the function
+y = f()
+
+// Plot the result
+plot(y, "Result", color=color.blue)

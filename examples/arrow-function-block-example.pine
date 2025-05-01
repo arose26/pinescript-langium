@@ -1,0 +1,18 @@
+//@version=5
+indicator("Arrow Function Block Example", overlay=false)
+
+// Arrow function with block example
+ProcessValue(value, threshold=50) =>
+    result = 0
+    if value > threshold
+        result := 100
+    else
+        result := value
+    result
+
+// Use the arrow function
+value = 75
+result = ProcessValue(value)
+
+// Plot the result
+plot(result, "Result", color=color.blue)

@@ -1,0 +1,11 @@
+//@version=5
+indicator("Minimal Arrow Function", overlay=false)
+
+// Minimal arrow function
+f() => 1
+
+// Use the function
+y = f()
+
+// Plot the result
+plot(y, "Result", color=color.blue)

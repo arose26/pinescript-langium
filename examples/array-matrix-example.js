@@ -1,0 +1,30 @@
+indicator('Array and Matrix Example', { overlay: false });
+var arr = array.new_float(5, 0);
+array.set(arr, 0, close);
+array.set(arr, 1, high);
+array.set(arr, 2, low);
+array.set(arr, 3, open);
+array.set(arr, 4, volume);
+var sum = 0;
+for (let i = 0; i <= array.size(arr) - 1; i++) {
+    sum = sum + array.get(arr, i);
+}
+var avg = sum / array.size(arr);
+var mat = matrix.new(3, 3, 0);
+matrix.set(mat, 0, 0, close);
+matrix.set(mat, 0, 1, high);
+matrix.set(mat, 0, 2, low);
+matrix.set(mat, 1, 0, open);
+matrix.set(mat, 1, 1, volume);
+matrix.set(mat, 1, 2, avg);
+matrix.set(mat, 2, 0, close[1]);
+matrix.set(mat, 2, 1, high[1]);
+matrix.set(mat, 2, 2, low[1]);
+var transposed = matrix.transpose(mat);
+var val1 = matrix.get(transposed, 0, 0);
+var val2 = matrix.get(transposed, 1, 1);
+var val3 = matrix.get(transposed, 2, 2);
+plot(avg, 'Array Average', { color: color.blue });
+plot(val1, 'Matrix Value 1', { color: color.red });
+plot(val2, 'Matrix Value 2', { color: color.green });
+plot(val3, 'Matrix Value 3', { color: color.yellow });

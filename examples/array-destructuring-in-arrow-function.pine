@@ -1,0 +1,13 @@
+//@version=5
+indicator("Array Destructuring in Arrow Function", overlay=false)
+
+// Arrow function with array destructuring
+myFunc() =>
+    [a, b, c] = [1, 2, 3]
+    a + b + c
+
+// Use the function
+result = myFunc()
+
+// Plot the result
+plot(result, "Result", color=color.blue)

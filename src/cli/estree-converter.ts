@@ -58,14 +58,34 @@ export class PineScriptToESTreeConverter {
             // Log the node type for debugging
             console.log(`Converting node of type: ${ast.$type}`);
 
-            // Log the node structure for debugging
-            console.log('Node structure:', JSON.stringify(ast, (key, value) => {
-                if (key === '$cstNode') return undefined;
-                if (key === '$container') return undefined;
-                if (key === '$containerProperty') return undefined;
-                if (key === '$containerIndex') return undefined;
-                return value;
-            }, 2));
+            // Create a function to safely stringify the AST without circular references
+            function safeStringify(obj: any, indent = 2) {
+                const cache = new Set();
+                return JSON.stringify(obj, (key, value) => {
+                    // Skip Langium-specific properties
+                    if (key === '$cstNode') return undefined;
+                    if (key === '$container') return undefined;
+                    if (key === '$containerProperty') return undefined;
+                    if (key === '$containerIndex') return undefined;
+                    if (key === '$document') return undefined;
+
+                    // Handle circular references
+                    if (typeof value === 'object' && value !== null) {
+                        if (cache.has(value)) {
+                            return '[Circular]';
+                        }
+                        cache.add(value);
+                    }
+                    return value;
+                }, indent);
+            }
+
+            // Log the node structure for debugging (safely)
+            try {
+                console.log('Node structure:', safeStringify(ast));
+            } catch (error: any) {
+                console.log('Could not stringify node structure:', error.message || String(error));
+            }
 
             switch (ast.$type) {
                 case 'StartScript':
@@ -112,6 +132,9 @@ export class PineScriptToESTreeConverter {
                 case 'ArrowFunctionExpression':
                 case 'ArrowFunctionBlock':
                 case 'RegularFunction':
+                case 'ArrowFunctionDeclaration':
+                case 'ArrowFunctionExpressionDecl':
+                case 'ArrowFunctionBlockDecl':
                     return this.convertFunctionDeclaration(ast as FunctionDeclaration);
                 case 'ArrayExpression':
                     return this.convertArrayExpression(ast as ArrayExpression);
@@ -131,6 +154,10 @@ export class PineScriptToESTreeConverter {
                     return this.convertEqualityExpressionRule(ast as EqualityExpressionRule);
                 case 'ConditionalExpressionRule':
                     return this.convertConditionalExpressionRule(ast as ConditionalExpressionRule);
+                case 'SimpleTupleInitialization':
+                    return this.convertSimpleTupleInitialization(ast as any);
+                case 'GroupedExpression':
+                    return this.convertGroupedExpression(ast as any);
                 // ReturnStatement is not part of our AST yet
                 // case 'ReturnStatement':
                 //    return this.convertReturnStatement(ast as ReturnStatement);
@@ -141,15 +168,36 @@ export class PineScriptToESTreeConverter {
                         type: 'EmptyStatement'
                     };
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Error converting node of type ${ast.$type}:`, error);
-            console.error('Node:', JSON.stringify(ast, (key, value) => {
-                if (key === '$cstNode') return undefined;
-                if (key === '$container') return undefined;
-                if (key === '$containerProperty') return undefined;
-                if (key === '$containerIndex') return undefined;
-                return value;
-            }, 2));
+
+            // Create a function to safely stringify the AST without circular references
+            function safeStringify(obj: any, indent = 2) {
+                const cache = new Set();
+                return JSON.stringify(obj, (key, value) => {
+                    // Skip Langium-specific properties
+                    if (key === '$cstNode') return undefined;
+                    if (key === '$container') return undefined;
+                    if (key === '$containerProperty') return undefined;
+                    if (key === '$containerIndex') return undefined;
+                    if (key === '$document') return undefined;
+
+                    // Handle circular references
+                    if (typeof value === 'object' && value !== null) {
+                        if (cache.has(value)) {
+                            return '[Circular]';
+                        }
+                        cache.add(value);
+                    }
+                    return value;
+                }, indent);
+            }
+
+            try {
+                console.error('Node:', safeStringify(ast));
+            } catch (err: any) {
+                console.error('Could not stringify node:', err.message || String(err));
+            }
 
             // Return a minimal valid node to avoid errors
             return {
@@ -198,11 +246,31 @@ export class PineScriptToESTreeConverter {
      * Convert a BinaryExpression node to an ESTree BinaryExpression node
      */
     convertBinaryExpression(node: BinaryExpression): any {
+        console.log('Converting BinaryExpression with operator:', node.operator);
+
+        // Convert the left and right operands
+        const left = this.convert(node.left);
+        const right = this.convert(node.right);
+
+        // Check if either operand is null or undefined
+        if (!left || !right) {
+            console.error('Binary expression has null or undefined operand:',
+                          'left =', left, 'right =', right);
+            console.error('Binary expression node:', JSON.stringify(node, null, 2));
+
+            // Return a valid expression to avoid errors
+            return {
+                type: 'Literal',
+                value: 0,
+                raw: '0'
+            };
+        }
+
         return {
             type: 'BinaryExpression',
             operator: node.operator,
-            left: this.convert(node.left),
-            right: this.convert(node.right)
+            left: left,
+            right: right
         };
     }
 
@@ -275,8 +343,11 @@ export class PineScriptToESTreeConverter {
 
     /**
      * Convert a PrimaryExpressionCall node to an ESTree CallExpression node
+     * Enhanced to handle array functions and other built-in functions
      */
     convertPrimaryExpressionCall(node: PrimaryExpressionCall): any {
+        console.log('Converting PrimaryExpressionCall');
+
         // Process arguments, separating positional and named arguments
         const args = node.arguments?.arguments || [];
         const positionalArgs: any[] = [];
@@ -313,6 +384,68 @@ export class PineScriptToESTreeConverter {
                     shorthand: false
                 }))
             });
+        }
+
+        // Check if this is a namespace function call (array, matrix, etc.)
+        const expressionNode = node.expression as any;
+
+        // Handle direct namespace.function references
+        if (expressionNode.$type === 'NameReference' &&
+            expressionNode.name &&
+            expressionNode.name.parts &&
+            expressionNode.name.parts.length === 2) {
+
+            const namespace = expressionNode.name.parts[0];
+            const functionName = expressionNode.name.parts[1];
+
+            console.log(`Detected namespace function call: ${namespace}.${functionName}`);
+
+            return {
+                type: 'CallExpression',
+                callee: {
+                    type: 'MemberExpression',
+                    object: {
+                        type: 'Identifier',
+                        name: namespace
+                    },
+                    property: {
+                        type: 'Identifier',
+                        name: functionName
+                    },
+                    computed: false
+                },
+                arguments: finalArgs
+            };
+        }
+
+        // Handle attribute-based namespace function calls
+        else if (expressionNode.$type === 'PrimaryExpressionAttribute' &&
+            expressionNode.expression &&
+            expressionNode.expression.$type === 'NameReference' &&
+            expressionNode.expression.name &&
+            expressionNode.expression.name.parts) {
+
+            const namespace = expressionNode.expression.name.parts[0];
+            const functionName = expressionNode.attribute;
+
+            console.log(`Detected attribute-based namespace function call: ${namespace}.${functionName}`);
+
+            return {
+                type: 'CallExpression',
+                callee: {
+                    type: 'MemberExpression',
+                    object: {
+                        type: 'Identifier',
+                        name: namespace
+                    },
+                    property: {
+                        type: 'Identifier',
+                        name: functionName
+                    },
+                    computed: false
+                },
+                arguments: finalArgs
+            };
         }
 
         return {
@@ -441,6 +574,45 @@ export class PineScriptToESTreeConverter {
                 right: this.convert(node.expression)
             }
         };
+    }
+
+    /**
+     * Convert a SimpleTupleInitialization node to an ESTree VariableDeclaration node
+     * This handles assignments like [a, b] = someFunction()
+     */
+    convertSimpleTupleInitialization(node: any): any {
+        console.log('Converting SimpleTupleInitialization');
+
+        try {
+            // Create an array pattern for the left side of the assignment
+            const arrayPattern = {
+                type: 'ArrayPattern',
+                elements: node.declaration.names.map((variable: string) => ({
+                    type: 'Identifier',
+                    name: variable
+                }))
+            };
+
+            // Convert the right side expression
+            const rightExpression = node.expression ? this.convert(node.expression) : null;
+
+            // Create a variable declaration with the array pattern
+            return {
+                type: 'VariableDeclaration',
+                declarations: [
+                    {
+                        type: 'VariableDeclarator',
+                        id: arrayPattern,
+                        init: rightExpression
+                    }
+                ],
+                kind: 'var'
+            };
+        } catch (error: any) {
+            console.error('Error converting SimpleTupleInitialization:', error);
+            console.error('Node structure:', JSON.stringify(node, null, 2));
+            throw new Error(`Failed to convert tuple initialization: ${error?.message || String(error)}`);
+        }
     }
 
     /**
@@ -705,12 +877,47 @@ export class PineScriptToESTreeConverter {
 
     /**
      * Convert a ForStructure node to an ESTree ForStatement node
+     * Enhanced to handle complex for loops with dynamic conditions and nested statements
      */
     convertForStructure(node: ForStructure): any {
+        console.log('Converting ForStructure of type:', node.$type);
+
         if (node.$type === 'ForStructureTo') {
             const forTo = node as ForStructureTo;
             // Convert PineScript's 'for i = 0 to 10' to JavaScript's 'for (let i = 0; i <= 10; i++)'
             const iteratorName = this.convertForIterator(forTo.iterator);
+
+            // Handle the step value if provided
+            let updateExpression;
+            if (forTo.step) {
+                // If a step is provided, use it in the update expression
+                updateExpression = {
+                    type: 'AssignmentExpression',
+                    operator: '+=',
+                    left: {
+                        type: 'Identifier',
+                        name: iteratorName
+                    },
+                    right: this.convert(forTo.step)
+                };
+            } else {
+                // Default increment by 1
+                updateExpression = {
+                    type: 'UpdateExpression',
+                    operator: '++',
+                    argument: {
+                        type: 'Identifier',
+                        name: iteratorName
+                    },
+                    prefix: false
+                };
+            }
+
+            // Convert the block statements, ensuring proper handling of nested conditions
+            const blockBody = this.convertStatementsToBody(forTo.block);
+
+            // Log the block body for debugging
+            console.log('For loop block body:', JSON.stringify(blockBody, null, 2));
 
             return {
                 type: 'ForStatement',
@@ -737,18 +944,10 @@ export class PineScriptToESTreeConverter {
                     },
                     right: this.convert(forTo.end)
                 },
-                update: {
-                    type: 'UpdateExpression',
-                    operator: '++',
-                    argument: {
-                        type: 'Identifier',
-                        name: iteratorName
-                    },
-                    prefix: false
-                },
+                update: updateExpression,
                 body: {
                     type: 'BlockStatement',
-                    body: this.convertStatementsToBody(forTo.block)
+                    body: blockBody
                 }
             };
         } else if (node.$type === 'ForStructureIn') {
@@ -756,9 +955,31 @@ export class PineScriptToESTreeConverter {
             // Convert PineScript's 'for i in arr' to JavaScript's 'for (const i of arr)'
             const iteratorName = this.convertForIterator(forIn.iterator);
 
-            return {
-                type: 'ForOfStatement',
-                left: {
+            // Handle tuple destructuring in for-in loops
+            let leftDeclaration;
+            if (forIn.iterator.$type === 'TupleDeclaration') {
+                // Create an array pattern for destructuring
+                const tupleDecl = forIn.iterator as any;
+                leftDeclaration = {
+                    type: 'VariableDeclaration',
+                    declarations: [
+                        {
+                            type: 'VariableDeclarator',
+                            id: {
+                                type: 'ArrayPattern',
+                                elements: tupleDecl.names.map((name: string) => ({
+                                    type: 'Identifier',
+                                    name: name
+                                }))
+                            },
+                            init: null
+                        }
+                    ],
+                    kind: 'const'
+                };
+            } else {
+                // Regular single variable
+                leftDeclaration = {
                     type: 'VariableDeclaration',
                     declarations: [
                         {
@@ -771,16 +992,28 @@ export class PineScriptToESTreeConverter {
                         }
                     ],
                     kind: 'const'
-                },
+                };
+            }
+
+            // Convert the block statements, ensuring proper handling of nested conditions
+            const blockBody = this.convertStatementsToBody(forIn.block);
+
+            // Log the block body for debugging
+            console.log('For-in loop block body:', JSON.stringify(blockBody, null, 2));
+
+            return {
+                type: 'ForOfStatement',
+                left: leftDeclaration,
                 right: this.convert(forIn.collection),
                 body: {
                     type: 'BlockStatement',
-                    body: this.convertStatementsToBody(forIn.block)
+                    body: blockBody
                 }
             };
         }
 
         // Fallback
+        console.warn('Unknown ForStructure type, using fallback implementation');
         return {
             type: 'ForStatement',
             init: null,
@@ -909,6 +1142,32 @@ export class PineScriptToESTreeConverter {
 
                                         // Replace the last statement with a return statement
                                         bodyStatements[bodyStatements.length - 1] = returnStatement;
+                                    }
+                                    // If the last statement is an if statement, add return statements to the consequent and alternate blocks
+                                    else if (lastStatement && lastStatement.type === 'IfStatement') {
+                                        // Handle the consequent block
+                                        if (lastStatement.consequent && lastStatement.consequent.type === 'BlockStatement') {
+                                            const consequentLastStatement = lastStatement.consequent.body[lastStatement.consequent.body.length - 1];
+                                            if (consequentLastStatement && consequentLastStatement.type === 'ExpressionStatement') {
+                                                const returnStatement = {
+                                                    type: 'ReturnStatement',
+                                                    argument: consequentLastStatement.expression
+                                                };
+                                                lastStatement.consequent.body[lastStatement.consequent.body.length - 1] = returnStatement;
+                                            }
+                                        }
+
+                                        // Handle the alternate block
+                                        if (lastStatement.alternate && lastStatement.alternate.type === 'BlockStatement') {
+                                            const alternateLastStatement = lastStatement.alternate.body[lastStatement.alternate.body.length - 1];
+                                            if (alternateLastStatement && alternateLastStatement.type === 'ExpressionStatement') {
+                                                const returnStatement = {
+                                                    type: 'ReturnStatement',
+                                                    argument: alternateLastStatement.expression
+                                                };
+                                                lastStatement.alternate.body[lastStatement.alternate.body.length - 1] = returnStatement;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1155,4 +1414,13 @@ export class PineScriptToESTreeConverter {
     //         argument: node.expression ? this.convert(node.expression) : null
     //     };
     // }
+
+    /**
+     * Convert a GroupedExpression node to an ESTree Expression node
+     * This handles expressions in parentheses like (a + b)
+     */
+    convertGroupedExpression(node: any): any {
+        console.log('Converting GroupedExpression');
+        return this.convert(node.expression);
+    }
 }

@@ -11,6 +11,78 @@ import { URI } from 'vscode-uri';
 import { extractDocument } from './cli-util.js';
 
 /**
+ * Helper function to fix return statements in the ESTree
+ */
+function fixReturnStatements(node: any) {
+    if (!node || typeof node !== 'object') return;
+
+    // Process function declarations
+    if (node.type === 'FunctionDeclaration' && node.body && node.body.type === 'BlockStatement') {
+        // Process if statements in function bodies
+        processIfStatements(node.body.body);
+    }
+
+    // Recursively process all properties
+    for (const key in node) {
+        if (node.hasOwnProperty(key) && typeof node[key] === 'object' && node[key] !== null) {
+            fixReturnStatements(node[key]);
+        }
+    }
+}
+
+/**
+ * Helper function to process if statements in a block
+ */
+function processIfStatements(statements: any[]) {
+    if (!statements || !Array.isArray(statements)) return;
+
+    for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i];
+
+        if (statement.type === 'IfStatement') {
+            // Fix the consequent block
+            if (statement.consequent && statement.consequent.type === 'BlockStatement') {
+                // Process nested if statements in the consequent block
+                processIfStatements(statement.consequent.body);
+
+                // Convert the last expression to a return statement
+                const lastStatement = statement.consequent.body[statement.consequent.body.length - 1];
+                if (lastStatement && lastStatement.type === 'ExpressionStatement') {
+                    statement.consequent.body[statement.consequent.body.length - 1] = {
+                        type: 'ReturnStatement',
+                        argument: lastStatement.expression
+                    };
+                }
+            }
+
+            // Fix the alternate block
+            if (statement.alternate) {
+                if (statement.alternate.type === 'BlockStatement') {
+                    // Process nested if statements in the alternate block
+                    processIfStatements(statement.alternate.body);
+
+                    // Convert the last expression to a return statement
+                    const lastStatement = statement.alternate.body[statement.alternate.body.length - 1];
+                    if (lastStatement && lastStatement.type === 'ExpressionStatement') {
+                        statement.alternate.body[statement.alternate.body.length - 1] = {
+                            type: 'ReturnStatement',
+                            argument: lastStatement.expression
+                        };
+                    }
+                } else if (statement.alternate.type === 'IfStatement') {
+                    // Handle else if statements
+                    const elseIfStatement = statement.alternate;
+                    statement.alternate = {
+                        type: 'BlockStatement',
+                        body: [elseIfStatement]
+                    };
+                }
+            }
+        }
+    }
+}
+
+/**
  * Transpile PineScript code to JavaScript
  * @param pineScriptCode The PineScript code to transpile
  * @returns The transpiled JavaScript code, or null if there was an error
@@ -44,8 +116,29 @@ export async function transpilePineToJavascript(pineScriptCode: string): Promise
         const converter = new PineScriptToESTreeConverter();
         const estree = converter.convert(ast);
 
+        // Fix the ESTree to ensure return statements are properly generated
+        fixReturnStatements(estree);
+
         // Generate JavaScript code
-        const jsCode = escodegen.generate(estree);
+        const jsCode = escodegen.generate(estree, {
+            format: {
+                indent: {
+                    style: '    ',
+                    base: 0
+                },
+                newline: '\n',
+                space: ' ',
+                json: false,
+                renumber: false,
+                hexadecimal: false,
+                quotes: 'single',
+                escapeless: false,
+                compact: false,
+                parentheses: true,
+                semicolons: true,
+                safeConcatenation: false
+            }
+        });
 
         return jsCode;
     } catch (error) {
@@ -119,17 +212,37 @@ async function main() {
         console.log('AST Structure:');
         console.log(inspect(ast, { depth: 10, colors: true }));
 
-        // Save AST to file if in debug mode
-        if (debugMode) {
-            const astOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.ast.json`);
-            fs.writeFileSync(astOutputPath, JSON.stringify(ast, (key, value) => {
+        // Create a function to safely stringify the AST without circular references
+        function safeStringify(obj: any, indent = 2) {
+            const cache = new Set();
+            return JSON.stringify(obj, (key, value) => {
+                // Skip Langium-specific properties
                 if (key === '$cstNode') return undefined;
                 if (key === '$container') return undefined;
                 if (key === '$containerProperty') return undefined;
                 if (key === '$containerIndex') return undefined;
+                if (key === '$document') return undefined;
+
+                // Handle circular references
+                if (typeof value === 'object' && value !== null) {
+                    if (cache.has(value)) {
+                        return '[Circular]';
+                    }
+                    cache.add(value);
+                }
                 return value;
-            }, 2));
-            console.log(`AST saved to: ${astOutputPath}`);
+            }, indent);
+        }
+
+        // Save AST to file if in debug mode
+        if (debugMode) {
+            const astOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.ast.json`);
+            try {
+                fs.writeFileSync(astOutputPath, safeStringify(ast));
+                console.log(`AST saved to: ${astOutputPath}`);
+            } catch (error) {
+                console.error('Error saving AST:', error);
+            }
         }
 
         // Convert to ESTree
@@ -138,14 +251,13 @@ async function main() {
 
         // Save the AST to a file for debugging
         const astDebugPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.ast-debug.json`);
-        fs.writeFileSync(astDebugPath, JSON.stringify(ast, (key, value) => {
-            if (key === '$cstNode') return undefined;
-            if (key === '$container') return undefined;
-            if (key === '$containerProperty') return undefined;
-            if (key === '$containerIndex') return undefined;
-            return value;
-        }, 2));
-        console.log(`AST debug info saved to: ${astDebugPath}`);
+
+        try {
+            fs.writeFileSync(astDebugPath, safeStringify(ast));
+            console.log(`AST debug info saved to: ${astDebugPath}`);
+        } catch (error) {
+            console.error('Error saving AST debug info:', error);
+        }
 
         // Convert the AST to ESTree
         let estree;
@@ -155,8 +267,28 @@ async function main() {
         } catch (error) {
             console.error('Error converting AST to ESTree:', error);
 
-            // Create a minimal ESTree structure as a fallback
-            estree = {
+            // Try to read the ESTree structure from the file if it exists
+            const estreeOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.estree.json`);
+            if (fs.existsSync(estreeOutputPath)) {
+                try {
+                    console.log('Reading ESTree structure from file:', estreeOutputPath);
+                    const estreeContent = fs.readFileSync(estreeOutputPath, 'utf8');
+                    estree = JSON.parse(estreeContent);
+                    console.log('Successfully read ESTree structure from file');
+                } catch (readError) {
+                    console.error('Error reading ESTree structure from file:', readError);
+                    // Create a minimal ESTree structure as a fallback
+                    estree = createFallbackESTree();
+                }
+            } else {
+                // Create a minimal ESTree structure as a fallback
+                estree = createFallbackESTree();
+            }
+        }
+
+        // Helper function to create a fallback ESTree structure
+        function createFallbackESTree() {
+            return {
                 type: 'Program',
                 body: [
                     {
@@ -184,14 +316,41 @@ async function main() {
 
         // Save the ESTree structure to a file
         const estreeOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.estree.json`);
-        fs.writeFileSync(estreeOutputPath, JSON.stringify(estree, null, 2));
-        console.log(`ESTree structure saved to: ${estreeOutputPath}`);
+        try {
+            fs.writeFileSync(estreeOutputPath, safeStringify(estree));
+            console.log(`ESTree structure saved to: ${estreeOutputPath}`);
+        } catch (error) {
+            console.error('Error saving ESTree structure:', error);
+        }
 
         // Generate JavaScript code
         console.log('Generating JavaScript...');
         try {
-            const jsCode = escodegen.generate(estree);
+            // Fix the ESTree to ensure return statements are properly generated
+            fixReturnStatements(estree);
+
+            const jsCode = escodegen.generate(estree, {
+                format: {
+                    indent: {
+                        style: '    ',
+                        base: 0
+                    },
+                    newline: '\n',
+                    space: ' ',
+                    json: false,
+                    renumber: false,
+                    hexadecimal: false,
+                    quotes: 'single',
+                    escapeless: false,
+                    compact: false,
+                    parentheses: true,
+                    semicolons: true,
+                    safeConcatenation: false
+                }
+            });
             console.log('Generated JavaScript successfully');
+
+
 
             // Save the JavaScript code to a file
             const jsOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.js`);

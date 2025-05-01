@@ -1,0 +1,21 @@
+//@version=5
+indicator("Bull Divergence Function", overlay=false)
+
+// Simple isPL function
+isPL(src, left=3, right=0) =>
+    ta.pivotlow(src, left, right)
+
+// Bull divergence function
+isInBullDivergence(indicator, price=close, length=100, confirm=true, confLength=1) =>
+    isDiv = 0
+    confirmOffset = confirm ? confLength : 0
+    LL = indicator[0+confirmOffset]
+    if (isPL(indicator, right=confirmOffset) and indicator < 50)
+        isDiv := 1
+    isDiv
+
+// Use the function
+y = isInBullDivergence(close, length=50)
+
+// Plot the result
+plot(y, "Result", color=color.blue)

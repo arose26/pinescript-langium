@@ -100,8 +100,8 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
                 tokenDict['=>'].CATEGORIES = ['operator'];
                 tokenDict['=>'].categoryMatches = ['operator'];
                 tokenDict['=>'].categoryMatchesMap = { operator: true };
-                // Set a higher priority for the arrow token
-                tokenDict['=>'].PRIORITY = 2;
+                // Set a much higher priority for the arrow token
+                tokenDict['=>'].PRIORITY = 10;
             }
 
             // Prioritize comparison operators over template specifications

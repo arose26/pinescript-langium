@@ -1,0 +1,13 @@
+//@version=5
+indicator("Arrow Function with Block", overlay=false)
+
+// Arrow function with block
+f() => 
+    x = 10
+    x * 2
+
+// Use the function
+y = f()
+
+// Plot the result
+plot(y, "Result", color=color.blue)

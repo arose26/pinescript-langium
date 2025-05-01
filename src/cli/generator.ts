@@ -7,10 +7,93 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.js`;
 
-    const fileContent = `
+    // Read the runtime library files
+    const runtimeDir = path.join(path.dirname(path.dirname(__dirname)), 'src', 'runtime');
+    const arrayFunctionsPath = path.join(runtimeDir, 'array-functions.js');
+
+    // Create the runtime library content
+    const runtimeContent = `
         // This file was generated from ${data.name}${path.extname(filePath)}
 
-        // Array methods and properties
+        // PineScript runtime library
+
+        // Array namespace and functions
+        const array = {
+            // Array creation functions
+            new_float: function(size = 0, initialValue = 0.0) {
+                return new Array(size).fill(initialValue);
+            },
+            new_int: function(size = 0, initialValue = 0) {
+                return new Array(size).fill(initialValue);
+            },
+            new_bool: function(size = 0, initialValue = false) {
+                return new Array(size).fill(initialValue);
+            },
+            new_string: function(size = 0, initialValue = '') {
+                return new Array(size).fill(initialValue);
+            },
+
+            // Array manipulation functions
+            push: function(arr, value) {
+                arr.push(value);
+                return arr;
+            },
+            pop: function(arr) {
+                if (arr.length === 0) {
+                    return null;
+                }
+                return arr.pop();
+            },
+            get: function(arr, index) {
+                if (index < 0 || index >= arr.length) {
+                    return null;
+                }
+                return arr[index];
+            },
+            set: function(arr, index, value) {
+                if (index < 0 || index >= arr.length) {
+                    return arr;
+                }
+                arr[index] = value;
+                return arr;
+            },
+            size: function(arr) {
+                return arr.length;
+            },
+            insert: function(arr, index, value) {
+                if (index < 0 || index > arr.length) {
+                    return arr;
+                }
+                arr.splice(index, 0, value);
+                return arr;
+            },
+            remove: function(arr, index) {
+                if (index < 0 || index >= arr.length) {
+                    return arr;
+                }
+                arr.splice(index, 1);
+                return arr;
+            },
+            clear: function(arr) {
+                arr.length = 0;
+                return arr;
+            },
+            copy: function(arr) {
+                return [...arr];
+            },
+            slice: function(arr, start, end) {
+                return arr.slice(start, end);
+            },
+            fill: function(arr, value, size) {
+                arr.length = 0;
+                for (let i = 0; i < size; i++) {
+                    arr.push(value);
+                }
+                return arr;
+            }
+        };
+
+        // Array methods for convenience
         Array.prototype.size = function() { return this.length; };
         Array.prototype.push_back = function(value) { this.push(value); return this; };
         Array.prototype.pop_back = function() { return this.pop(); };
@@ -40,11 +123,155 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
         Array.prototype.find = function(callback) { return Array.prototype.find.call(this, callback); };
         Array.prototype.findIndex = function(callback) { return Array.prototype.findIndex.call(this, callback); };
 
+        // Math namespace
+        const math = {
+            max: Math.max,
+            min: Math.min,
+            abs: Math.abs,
+            sqrt: Math.sqrt,
+            pow: Math.pow,
+            round: Math.round,
+            floor: Math.floor,
+            ceil: Math.ceil,
+            sin: Math.sin,
+            cos: Math.cos,
+            tan: Math.tan,
+            asin: Math.asin,
+            acos: Math.acos,
+            atan: Math.atan,
+            log: Math.log,
+            exp: Math.exp,
+            random: Math.random,
+            sum: function(arr) {
+                return arr.reduce((a, b) => a + b, 0);
+            }
+        };
+
+        // Matrix namespace for PCA calculations
+        const matrix = {
+            // Create a matrix (2D array)
+            new: function(rows, cols, initialValue = 0) {
+                return Array(rows).fill().map(() => Array(cols).fill(initialValue));
+            },
+
+            // Get the number of rows in a matrix
+            rows: function(matrix) {
+                return matrix.length;
+            },
+
+            // Get the number of columns in a matrix
+            cols: function(matrix) {
+                if (matrix.length === 0) return 0;
+                return matrix[0].length;
+            },
+
+            // Get a value from a matrix
+            get: function(matrix, row, col) {
+                if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length) {
+                    return null;
+                }
+                return matrix[row][col];
+            },
+
+            // Set a value in a matrix
+            set: function(matrix, row, col, value) {
+                if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length) {
+                    return matrix;
+                }
+                matrix[row][col] = value;
+                return matrix;
+            },
+
+            // Matrix transpose
+            transpose: function(matrix) {
+                if (matrix.length === 0) return [];
+
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                const result = Array(cols).fill().map(() => Array(rows).fill(0));
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        result[j][i] = matrix[i][j];
+                    }
+                }
+
+                return result;
+            },
+
+            // Matrix multiplication
+            multiply: function(matrixA, matrixB) {
+                if (matrixA.length === 0 || matrixB.length === 0) return [];
+
+                const rowsA = matrixA.length;
+                const colsA = matrixA[0].length;
+                const rowsB = matrixB.length;
+                const colsB = matrixB[0].length;
+
+                if (colsA !== rowsB) {
+                    throw new Error('Matrix dimensions do not match for multiplication');
+                }
+
+                const result = Array(rowsA).fill().map(() => Array(colsB).fill(0));
+
+                for (let i = 0; i < rowsA; i++) {
+                    for (let j = 0; j < colsB; j++) {
+                        let sum = 0;
+                        for (let k = 0; k < colsA; k++) {
+                            sum += matrixA[i][k] * matrixB[k][j];
+                        }
+                        result[i][j] = sum;
+                    }
+                }
+
+                return result;
+            },
+
+            // Principal Component Analysis (PCA)
+            pca: function(data, components = null) {
+                // Implementation of PCA algorithm
+                // This is a simplified version for demonstration
+                // For a real implementation, use a proper linear algebra library
+
+                if (data.length === 0) return { transformed: [], components: [], explained_variance: [] };
+
+                const rows = data.length;
+                const cols = data[0].length;
+
+                // Center the data (subtract mean from each column)
+                const means = Array(cols).fill(0);
+                for (let j = 0; j < cols; j++) {
+                    for (let i = 0; i < rows; i++) {
+                        means[j] += data[i][j];
+                    }
+                    means[j] /= rows;
+                }
+
+                const centered = Array(rows).fill().map(() => Array(cols).fill(0));
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        centered[i][j] = data[i][j] - means[j];
+                    }
+                }
+
+                // For a real implementation, calculate covariance matrix,
+                // eigenvalues, eigenvectors, and project data
+
+                // Return a placeholder result
+                return {
+                    transformed: centered,
+                    components: Array(cols).fill().map(() => Array(cols).fill(0)),
+                    explained_variance: Array(cols).fill(1/cols)
+                };
+            }
+        };
+
+        // User code
         ${generateStatements(script)}
     `;
 
     fs.mkdirSync(data.destination, { recursive: true });
-    fs.writeFileSync(generatedFilePath, fileContent);
+    fs.writeFileSync(generatedFilePath, runtimeContent);
     return generatedFilePath;
 }
 

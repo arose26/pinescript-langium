@@ -1,0 +1,14 @@
+//@version=5
+indicator("Array Destructuring Example", overlay=false)
+
+// Function that returns multiple values
+getValues() =>
+    [10, 20, 30]
+
+// Array destructuring assignment
+[a, b, c] = getValues()
+
+// Plot the values
+plot(a, "A", color=color.red)
+plot(b, "B", color=color.green)
+plot(c, "C", color=color.blue)
