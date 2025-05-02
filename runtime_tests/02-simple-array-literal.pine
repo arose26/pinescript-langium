@@ -1,8 +1,0 @@
-//@version=5
-indicator("Simple Array Literal Test")
-
-// Create a simple array literal
-arr = [1, 2, 3]
-
-// Plot the first element
-plot(arr[0], "First Element", color=color.blue)

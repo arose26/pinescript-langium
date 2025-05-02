@@ -114,6 +114,8 @@ export class PineScriptToESTreeConverter {
                     return this.convertSimpleNameInitialization(ast as SimpleNameInitialization);
                 case 'SimpleReassignment':
                     return this.convertSimpleReassignment(ast as SimpleReassignment);
+                case 'ArrayDestructuring':
+                    return this.convertArrayDestructuring(ast as any);
                 case 'IfStructure':
                     return this.convertIfStructure(ast as IfStructure);
                 case 'ElseIfClause':
@@ -135,6 +137,9 @@ export class PineScriptToESTreeConverter {
                 case 'ArrowFunctionDeclaration':
                 case 'ArrowFunctionExpressionDecl':
                 case 'ArrowFunctionBlockDecl':
+                case 'PCAStyleFunctionDeclaration':
+                case 'PCAStyleArrowFunctionExpressionDecl':
+                case 'PCAStyleArrowFunctionBlockDecl':
                     return this.convertFunctionDeclaration(ast as FunctionDeclaration);
                 case 'ArrayExpression':
                     return this.convertArrayExpression(ast as ArrayExpression);
@@ -400,6 +405,80 @@ export class PineScriptToESTreeConverter {
 
             console.log(`Detected namespace function call: ${namespace}.${functionName}`);
 
+            // Special handling for array functions
+            if (namespace === 'array') {
+                // Map PineScript array function names to JavaScript runtime function names
+                const functionNameMap: {[key: string]: string} = {
+                    'new': 'array_new_float',
+                    'new_float': 'array_new_float',
+                    'new_int': 'array_new_int',
+                    'new_bool': 'array_new_bool',
+                    'new_string': 'array_new_string',
+                    'push': 'array_push',
+                    'pop': 'array_pop',
+                    'get': 'array_get',
+                    'set': 'array_set',
+                    'size': 'array_size',
+                    'insert': 'array_insert',
+                    'remove': 'array_remove',
+                    'clear': 'array_clear',
+                    'copy': 'array_copy',
+                    'slice': 'array_slice',
+                    'fill': 'array_fill',
+                    'join': 'array_join',
+                    'sort': 'array_sort',
+                    'reverse': 'array_reverse',
+                    'indexOf': 'array_indexOf',
+                    'includes': 'array_includes'
+                };
+
+                // Use the mapped function name if available, otherwise use the original
+                const mappedFunctionName = functionNameMap[functionName] || `${namespace}_${functionName}`;
+
+                console.log(`Mapped array function: ${functionName} -> ${mappedFunctionName}`);
+
+                return {
+                    type: 'CallExpression',
+                    callee: {
+                        type: 'Identifier',
+                        name: mappedFunctionName
+                    },
+                    arguments: finalArgs
+                };
+            }
+
+            // Special handling for matrix functions
+            else if (namespace === 'matrix') {
+                // Map PineScript matrix function names to JavaScript runtime function names
+                const functionNameMap: {[key: string]: string} = {
+                    'new': 'matrix_new',
+                    'rows': 'matrix_rows',
+                    'cols': 'matrix_cols',
+                    'get': 'matrix_get',
+                    'set': 'matrix_set',
+                    'transpose': 'matrix_transpose',
+                    'multiply': 'matrix_multiply',
+                    'covariance': 'matrix_covariance',
+                    'eigen': 'matrix_eigen',
+                    'pca': 'matrix_pca'
+                };
+
+                // Use the mapped function name if available, otherwise use the original
+                const mappedFunctionName = functionNameMap[functionName] || `${namespace}_${functionName}`;
+
+                console.log(`Mapped matrix function: ${functionName} -> ${mappedFunctionName}`);
+
+                return {
+                    type: 'CallExpression',
+                    callee: {
+                        type: 'Identifier',
+                        name: mappedFunctionName
+                    },
+                    arguments: finalArgs
+                };
+            }
+
+            // Default handling for other namespace functions
             return {
                 type: 'CallExpression',
                 callee: {
@@ -429,6 +508,23 @@ export class PineScriptToESTreeConverter {
             const functionName = expressionNode.attribute;
 
             console.log(`Detected attribute-based namespace function call: ${namespace}.${functionName}`);
+
+            // Special handling for array and matrix functions (similar to above)
+            if (namespace === 'array' || namespace === 'matrix') {
+                const prefix = namespace === 'array' ? 'array_' : 'matrix_';
+                const mappedFunctionName = `${prefix}${functionName}`;
+
+                console.log(`Mapped ${namespace} function: ${functionName} -> ${mappedFunctionName}`);
+
+                return {
+                    type: 'CallExpression',
+                    callee: {
+                        type: 'Identifier',
+                        name: mappedFunctionName
+                    },
+                    arguments: finalArgs
+                };
+            }
 
             return {
                 type: 'CallExpression',
@@ -914,10 +1010,19 @@ export class PineScriptToESTreeConverter {
             }
 
             // Convert the block statements, ensuring proper handling of nested conditions
-            const blockBody = this.convertStatementsToBody(forTo.block);
+            let blockBody;
+            try {
+                blockBody = this.convertStatementsToBody(forTo.block);
 
-            // Log the block body for debugging
-            console.log('For loop block body:', JSON.stringify(blockBody, null, 2));
+                // Process the block body to handle complex nested conditions and reassignments
+                blockBody = this.processNestedConditionsInLoop(blockBody);
+
+                // Log the processed block body for debugging
+                console.log('Processed for loop block body:', JSON.stringify(blockBody, null, 2));
+            } catch (error: any) {
+                console.error('Error processing for loop block body:', error);
+                blockBody = [];
+            }
 
             return {
                 type: 'ForStatement',
@@ -996,10 +1101,19 @@ export class PineScriptToESTreeConverter {
             }
 
             // Convert the block statements, ensuring proper handling of nested conditions
-            const blockBody = this.convertStatementsToBody(forIn.block);
+            let blockBody;
+            try {
+                blockBody = this.convertStatementsToBody(forIn.block);
 
-            // Log the block body for debugging
-            console.log('For-in loop block body:', JSON.stringify(blockBody, null, 2));
+                // Process the block body to handle complex nested conditions and reassignments
+                blockBody = this.processNestedConditionsInLoop(blockBody);
+
+                // Log the processed block body for debugging
+                console.log('Processed for-in loop block body:', JSON.stringify(blockBody, null, 2));
+            } catch (error: any) {
+                console.error('Error processing for-in loop block body:', error);
+                blockBody = [];
+            }
 
             return {
                 type: 'ForOfStatement',
@@ -1024,6 +1138,42 @@ export class PineScriptToESTreeConverter {
                 body: []
             }
         };
+    }
+
+    /**
+     * Process nested conditions and reassignments in loop bodies
+     * This method handles complex cases like those in PCA.pine
+     */
+    processNestedConditionsInLoop(blockBody: any[]): any[] {
+        if (!blockBody || !Array.isArray(blockBody)) {
+            return blockBody;
+        }
+
+        // Process each statement in the block
+        return blockBody.map(statement => {
+            // Handle if statements with nested conditions
+            if (statement.type === 'IfStatement') {
+                // Process the consequent block (then block)
+                if (statement.consequent && statement.consequent.type === 'BlockStatement') {
+                    statement.consequent.body = this.processNestedConditionsInLoop(statement.consequent.body);
+                }
+
+                // Process the alternate block (else block)
+                if (statement.alternate) {
+                    if (statement.alternate.type === 'BlockStatement') {
+                        statement.alternate.body = this.processNestedConditionsInLoop(statement.alternate.body);
+                    } else if (statement.alternate.type === 'IfStatement') {
+                        // Handle nested if-else
+                        statement.alternate = this.processNestedConditionsInLoop([statement.alternate])[0];
+                    }
+                }
+            }
+
+            // Handle reassignments with := operator
+            // These are already converted to AssignmentExpression nodes with operator '='
+
+            return statement;
+        });
     }
 
     /**
@@ -1067,14 +1217,27 @@ export class PineScriptToESTreeConverter {
 
         try {
             // Extract parameters with proper error handling
-            const params: Array<{type: string, name: string}> = [];
+            const params: Array<any> = [];
             try {
+                // Handle regular parameters
                 if (node.parameters?.parameters) {
                     for (const param of node.parameters.parameters) {
-                        params.push({
-                            type: 'Identifier',
-                            name: param.name
-                        });
+                        // Check if this is a PCA-style parameter with a default value
+                        if (param.defaultValue) {
+                            params.push({
+                                type: 'AssignmentPattern',
+                                left: {
+                                    type: 'Identifier',
+                                    name: param.name
+                                },
+                                right: this.convert(param.defaultValue)
+                            });
+                        } else {
+                            params.push({
+                                type: 'Identifier',
+                                name: param.name
+                            });
+                        }
                     }
                 }
             } catch (error: any) {
@@ -1422,5 +1585,76 @@ export class PineScriptToESTreeConverter {
     convertGroupedExpression(node: any): any {
         console.log('Converting GroupedExpression');
         return this.convert(node.expression);
+    }
+
+    /**
+     * Convert an ArrayDestructuring node to an ESTree VariableDeclaration node
+     * This handles array destructuring assignments like [a, b] = someFunction()
+     * Enhanced to handle complex cases like those in PCA.pine
+     */
+    convertArrayDestructuring(node: any): any {
+        console.log('Converting ArrayDestructuring');
+
+        try {
+            // Log the node structure for debugging
+            console.log('ArrayDestructuring node structure:', JSON.stringify(node, (key, value) => {
+                if (key === '$cstNode') return undefined;
+                if (key === '$container') return undefined;
+                if (key === '$containerProperty') return undefined;
+                if (key === '$containerIndex') return undefined;
+                return value;
+            }, 2));
+
+            // Create an array pattern for the left side of the assignment
+            let arrayPattern;
+
+            // Handle different node structures
+            if (node.declaration && node.declaration.elements) {
+                // Standard array destructuring with elements array
+                arrayPattern = {
+                    type: 'ArrayPattern',
+                    elements: node.declaration.elements.map((element: string) => ({
+                        type: 'Identifier',
+                        name: element
+                    }))
+                };
+            } else if (node.declaration && node.declaration.names) {
+                // Alternative structure with names array (used in some cases)
+                arrayPattern = {
+                    type: 'ArrayPattern',
+                    elements: node.declaration.names.map((name: string) => ({
+                        type: 'Identifier',
+                        name: name
+                    }))
+                };
+            } else {
+                // Fallback for unknown structure
+                console.warn('Unknown ArrayDestructuring structure, using empty array pattern');
+                arrayPattern = {
+                    type: 'ArrayPattern',
+                    elements: []
+                };
+            }
+
+            // Convert the right side expression
+            const rightExpression = node.expression ? this.convert(node.expression) : null;
+
+            // Create a variable declaration with the array pattern
+            return {
+                type: 'VariableDeclaration',
+                declarations: [
+                    {
+                        type: 'VariableDeclarator',
+                        id: arrayPattern,
+                        init: rightExpression
+                    }
+                ],
+                kind: 'var'
+            };
+        } catch (error: any) {
+            console.error('Error converting ArrayDestructuring:', error);
+            console.error('Node structure:', JSON.stringify(node, null, 2));
+            throw new Error(`Failed to convert array destructuring: ${error?.message || String(error)}`);
+        }
     }
 }

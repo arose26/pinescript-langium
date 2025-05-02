@@ -1,0 +1,24 @@
+//@version=5
+indicator("Array Destructuring", overlay=false)
+
+// Function that returns multiple values
+getValues() =>
+    a = 10
+    b = 20
+    [a, b]
+
+// Array destructuring
+[x, y] = getValues()
+
+// Use the destructured values
+plot(x, "X Value", color=color.blue)
+plot(y, "Y Value", color=color.red)
+
+// Nested function with array destructuring
+processValues() =>
+    [c, d] = getValues()
+    result = c + d
+    result
+
+// Plot the result
+plot(processValues(), "Sum", color=color.green)

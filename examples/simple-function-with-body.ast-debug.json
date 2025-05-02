@@ -1,0 +1,199 @@
+{
+  "$type": "StartScript",
+  "statements": {
+    "$type": "Statements",
+    "statements": [
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "indicator"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "Simple Function with Body"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "overlay",
+                "expression": {
+                  "$type": "LiteralBool",
+                  "value": false
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "ArrowFunctionBlock",
+        "name": "add",
+        "parameters": {
+          "$type": "ParameterList",
+          "parameters": [
+            {
+              "$type": "ParameterDefinition",
+              "name": "a"
+            },
+            {
+              "$type": "ParameterDefinition",
+              "name": "b"
+            }
+          ]
+        },
+        "body": {
+          "$type": "Statements",
+          "statements": [
+            {
+              "$type": "SimpleNameInitialization",
+              "declaration": {
+                "$type": "VariableDeclaration",
+                "name": "result"
+              },
+              "expression": {
+                "$type": "BinaryExpression",
+                "left": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "a"
+                    ]
+                  }
+                },
+                "operator": "+",
+                "right": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "b"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "$type": "ExpressionStatement",
+              "expression": {
+                "$type": "NameReference",
+                "name": {
+                  "$type": "QualifiedName",
+                  "parts": [
+                    "result"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "export": false,
+        "method": false
+      },
+      {
+        "$type": "SimpleNameInitialization",
+        "declaration": {
+          "$type": "VariableDeclaration",
+          "name": "value"
+        },
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "add"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralNumber",
+                  "value": 5
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralNumber",
+                  "value": 10
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "plot"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "value"
+                    ]
+                  }
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "Result"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "color",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "color",
+                      "blue"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -12,7 +12,7 @@ Statements:
     statements+=Statement ((NEWLINE | COMMENT)+ statements+=Statement)* (NEWLINE | COMMENT)*;
 
 Statement:
-    FunctionDeclaration | ArrowFunctionDeclaration | CompoundStatement | SimpleStatement;
+    FunctionDeclaration | ArrowFunctionDeclaration | PCAStyleFunctionDeclaration | CompoundStatement | SimpleStatement;
 
 // Compound statements
 CompoundStatement:
@@ -49,11 +49,36 @@ FunctionDeclaration:
         {infer RegularFunction} NEWLINE INDENT body=Statements DEDENT
     );
 
-// Arrow function declaration
+// Arrow function declaration - standalone function with arrow syntax
 ArrowFunctionDeclaration:
     name=Name LPAR (parameters=ParameterList)? RPAR '=>' (
         {infer ArrowFunctionExpressionDecl} returnExpr=Expression |
         {infer ArrowFunctionBlockDecl} NEWLINE INDENT body=Statements DEDENT
+    );
+
+// PCA-style function declaration with named parameters and default values
+// This handles functions like MaxMinNz(value,max=100,min=0,def=50) =>
+PCAStyleFunctionDeclaration:
+    name=Name LPAR (parameters=PCAStyleParameterList)? RPAR '=>' (
+        {infer PCAStyleArrowFunctionExpressionDecl} returnExpr=Expression |
+        {infer PCAStyleArrowFunctionBlockDecl} NEWLINE INDENT body=Statements DEDENT
+    );
+
+// Parameter list for PCA-style function declarations
+PCAStyleParameterList:
+    parameters+=PCAStyleParameterDefinition (',' parameters+=PCAStyleParameterDefinition)* ','?;
+
+// Parameter definition for PCA-style function declarations
+PCAStyleParameterDefinition:
+    name=Name ('=' defaultValue=Expression)?;
+
+
+
+// Arrow function expression - used in assignments and other expressions
+ArrowFunctionExpr:
+    LPAR (parameters=ParameterList)? RPAR '=>' (
+        {infer ArrowFunctionExprBody} returnExpr=Expression |
+        {infer ArrowFunctionBlockBody} NEWLINE INDENT body=Statements DEDENT
     );
 
 
@@ -145,7 +170,7 @@ InlineLocalBlock:
 
 // Simple assignments
 SimpleAssignment:
-    SimpleVariableInitialization | SimpleReassignment | SimpleAugAssignment;
+    ArrayDestructuring | SimpleVariableInitialization | SimpleReassignment | SimpleAugAssignment;
 
 SimpleVariableInitialization:
     SimpleNameInitialization | SimpleTupleInitialization;
@@ -155,6 +180,13 @@ SimpleNameInitialization:
 
 SimpleTupleInitialization:
     declaration=TupleDeclaration '=' expression=Expression;
+
+// Array destructuring assignment - prioritized to resolve ambiguity
+ArrayDestructuring:
+    declaration=ArrayDestructuringDeclaration '=' expression=Expression;
+
+ArrayDestructuringDeclaration:
+    LSQB elements+=NameStore (',' elements+=NameStore)* ','? RSQB;
 
 
 
@@ -246,7 +278,8 @@ AtomicExpression infers Expression:
     {infer NameReference} name=QualifiedName |
     LiteralExpression |
     {infer GroupedExpression} LPAR expression=Expression RPAR |
-    ArrayLiteral;
+    ArrayLiteral |
+    {infer ArrowFunctionExpression} function=ArrowFunctionExpr;
 
 // Qualified name for namespace support
 QualifiedName:
@@ -344,7 +377,11 @@ terminal RSQB: ']';
 Name returns string:
     NAME | 'type' | 'method' | 'const' | 'simple' | 'series' |
     // Built-in library namespaces
-    'ta' | 'math' | 'color' | 'str' | 'array' | 'matrix' | 'map' | 'barstate' | 'request' | 'input' | 'ticker' | 'syminfo';
+    'ta' | 'math' | 'color' | 'str' | 'array' | 'matrix' | 'map' | 'barstate' | 'request' | 'input' | 'ticker' | 'syminfo' |
+    // Matrix operation keywords
+    'rows' | 'cols' | 'transpose' | 'multiply' | 'covariance' | 'eigen' | 'pca' |
+    // Array operation keywords
+    'new' | 'new_float' | 'new_int' | 'new_bool' | 'new_string' | 'push' | 'pop' | 'get' | 'set' | 'size' | 'insert' | 'remove' | 'clear' | 'copy' | 'slice' | 'fill' | 'join' | 'sort' | 'reverse' | 'indexOf' | 'includes';
 
 NameLoad returns string:
     Name;

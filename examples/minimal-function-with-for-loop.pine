@@ -1,0 +1,15 @@
+//@version=5
+indicator("Minimal Function with For Loop", overlay=false)
+
+// Minimal function with for loop
+f() =>
+    sum = 0
+    for i = 1 to 5
+        sum := sum + i
+    sum
+
+// Use the function
+result = f()
+
+// Plot the result
+plot(result, "Result", color=color.blue)

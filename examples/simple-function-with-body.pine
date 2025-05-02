@@ -1,0 +1,13 @@
+//@version=5
+indicator("Simple Function with Body", overlay=false)
+
+// Simple function with body
+add(a, b) =>
+    result = a + b
+    result
+
+// Use the function
+value = add(5, 10)
+
+// Plot the result
+plot(value, "Result", color=color.blue)

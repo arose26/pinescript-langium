@@ -1,0 +1,19 @@
+//@version=5
+indicator("For Loop Function 2", overlay=false)
+
+// Function with for loop
+sumRange(start, end) =>
+    sum = 0
+    for i = start to end
+        sum := sum + i
+    sum
+
+// Use the function
+a = sumRange(1, 5)
+b = sumRange(5, 10)
+c = sumRange(1, 10)
+
+// Plot the results
+plot(a, "Sum 1-5", color=color.blue)
+plot(b, "Sum 5-10", color=color.red)
+plot(c, "Sum 1-10", color=color.green)

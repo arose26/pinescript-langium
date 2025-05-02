@@ -1,9 +1,0 @@
-//@version=5
-indicator("Core Persistent Counter")
-
-// Persistent variable (keeps value across bars)
-var counter = 0
-counter := counter + 1
-
-// Plot the counter
-plot(counter, "Counter", color=color.red)

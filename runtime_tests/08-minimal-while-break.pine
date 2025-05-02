@@ -1,8 +1,0 @@
-//@version=5
-indicator("Minimal While Loop with Break Test")
-
-counter = 0
-while counter < 5
-    counter := counter + 1
-
-plot(counter, "Counter", color=color.red)

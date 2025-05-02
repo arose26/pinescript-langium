@@ -1,0 +1,10 @@
+//@version=5
+indicator("Simple For Loop 3", overlay=false)
+
+// Simple for loop
+sum = 0
+for i = 1 to 5
+    sum := sum + i
+
+// Plot the result
+plot(sum, "Sum", color=color.blue)

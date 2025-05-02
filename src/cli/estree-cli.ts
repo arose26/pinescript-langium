@@ -9,6 +9,7 @@ import { inspect } from 'node:util';
 import { LangiumDocument } from 'langium';
 import { URI } from 'vscode-uri';
 import { extractDocument } from './cli-util.js';
+import { getBuiltinsCode } from './builtins.js';
 
 /**
  * Helper function to fix return statements in the ESTree
@@ -87,6 +88,17 @@ function processIfStatements(statements: any[]) {
  * @param pineScriptCode The PineScript code to transpile
  * @returns The transpiled JavaScript code, or null if there was an error
  */
+/**
+ * Parse a string of PineScript code
+ */
+async function parseString(content: string, services: ReturnType<typeof createPineScriptServices>['PineScript']): Promise<LangiumDocument> {
+    // Create a virtual document URI
+    const uri = URI.parse('memory://pinescript.pine');
+    const document = services.shared.workspace.LangiumDocumentFactory.fromString(content, uri);
+    await services.shared.workspace.DocumentBuilder.build([document]);
+    return document;
+}
+
 export async function transpilePineToJavascript(pineScriptCode: string): Promise<string | null> {
     try {
         // Create the language services
@@ -96,7 +108,7 @@ export async function transpilePineToJavascript(pineScriptCode: string): Promise
         const document = await parseString(pineScriptCode, services);
 
         // Check for validation errors
-        const validationErrors = document.diagnostics?.filter(d => d.severity === 1);
+        const validationErrors = document.diagnostics?.filter((d: any) => d.severity === 1);
         if (validationErrors && validationErrors.length > 0) {
             console.error('There are validation errors:');
             for (const error of validationErrors) {
@@ -140,23 +152,18 @@ export async function transpilePineToJavascript(pineScriptCode: string): Promise
             }
         });
 
-        return jsCode;
+        // Add the built-in functions to the generated code
+        const builtinsCode = getBuiltinsCode();
+        const finalCode = builtinsCode + '\n\n' + jsCode;
+
+        return finalCode;
     } catch (error) {
         console.error('Error:', error);
         return null;
     }
 }
 
-/**
- * Parse a string of PineScript code
- */
-async function parseString(content: string, services: ReturnType<typeof createPineScriptServices>['PineScript']): Promise<LangiumDocument> {
-    // Create a virtual document URI
-    const uri = URI.parse('memory://pinescript.pine');
-    const document = services.shared.workspace.LangiumDocumentFactory.fromString(content, uri);
-    await services.shared.workspace.DocumentBuilder.build([document]);
-    return document;
-}
+
 
 /**
  * Command line interface for transpiling PineScript files to JavaScript
@@ -192,7 +199,7 @@ async function main() {
         const document = await extractDocument(filePath, services);
 
         // Check for validation errors
-        const validationErrors = document.diagnostics?.filter(d => d.severity === 1);
+        const validationErrors = document.diagnostics?.filter((d: any) => d.severity === 1);
         if (validationErrors && validationErrors.length > 0) {
             console.error('There are validation errors:');
             for (const error of validationErrors) {
@@ -350,11 +357,13 @@ async function main() {
             });
             console.log('Generated JavaScript successfully');
 
-
+            // Add the built-in functions to the generated code
+            const builtinsCode = getBuiltinsCode();
+            const finalCode = builtinsCode + '\n\n' + jsCode;
 
             // Save the JavaScript code to a file
             const jsOutputPath = path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}.js`);
-            fs.writeFileSync(jsOutputPath, jsCode);
+            fs.writeFileSync(jsOutputPath, finalCode);
             console.log(`JavaScript code saved to: ${jsOutputPath}`);
         } catch (error) {
             console.error('Error generating JavaScript:', error);

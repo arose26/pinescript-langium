@@ -7,9 +7,7 @@ export function generateJavaScript(script: StartScript, filePath: string, destin
     const data = extractDestinationAndName(filePath, destination);
     const generatedFilePath = `${path.join(data.destination, data.name)}.js`;
 
-    // Read the runtime library files
-    const runtimeDir = path.join(path.dirname(path.dirname(__dirname)), 'src', 'runtime');
-    const arrayFunctionsPath = path.join(runtimeDir, 'array-functions.js');
+    // Runtime library is embedded in the generated code
 
     // Create the runtime library content
     const runtimeContent = `

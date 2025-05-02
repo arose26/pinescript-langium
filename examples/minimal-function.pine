@@ -1,0 +1,12 @@
+//@version=5
+indicator("Minimal Function", overlay=false)
+
+// Minimal function
+f() =>
+    42
+
+// Use the function
+result = f()
+
+// Plot the result
+plot(result, "Result", color=color.blue)

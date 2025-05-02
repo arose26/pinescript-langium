@@ -16,10 +16,19 @@ export async function extractDocument(fileName: string, services: LangiumCoreSer
         process.exit(1);
     }
 
-    const document = await services.shared.workspace.LangiumDocuments.getOrCreateDocument(URI.file(path.resolve(fileName)));
+    // Read the file content
+    const content = fs.readFileSync(fileName, 'utf-8');
+
+    // Create a URI for the file
+    const uri = URI.file(path.resolve(fileName));
+
+    // Create a document from the content
+    const document = services.shared.workspace.LangiumDocumentFactory.fromString(content, uri);
+
+    // Build the document
     await services.shared.workspace.DocumentBuilder.build([document], { validation: true });
 
-    const validationErrors = (document.diagnostics ?? []).filter(e => e.severity === 1);
+    const validationErrors = (document.diagnostics ?? []).filter((e: any) => e.severity === 1);
     if (validationErrors.length > 0) {
         console.error(chalk.red('There are validation errors:'));
         for (const validationError of validationErrors) {

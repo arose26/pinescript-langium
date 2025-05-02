@@ -1,0 +1,158 @@
+{
+  "$type": "StartScript",
+  "statements": {
+    "$type": "Statements",
+    "statements": [
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "indicator"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "Simple For Loop"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "overlay",
+                "expression": {
+                  "$type": "LiteralBool",
+                  "value": false
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "SimpleNameInitialization",
+        "declaration": {
+          "$type": "VariableDeclaration",
+          "name": "sum"
+        },
+        "expression": {
+          "$type": "LiteralNumber",
+          "value": 0
+        }
+      },
+      {
+        "$type": "StructureStatement",
+        "structure": {
+          "$type": "ForStructureTo",
+          "iterator": {
+            "$type": "ForIterator"
+          },
+          "start": {
+            "$type": "LiteralNumber",
+            "value": 1
+          },
+          "end": {
+            "$type": "LiteralNumber",
+            "value": 10
+          },
+          "block": {
+            "$type": "Statements",
+            "statements": [
+              {
+                "$type": "SimpleReassignment",
+                "target": {
+                  "$type": "AssignmentTargetName",
+                  "name": "sum"
+                },
+                "expression": {
+                  "$type": "BinaryExpression",
+                  "left": {
+                    "$type": "NameReference",
+                    "name": {
+                      "$type": "QualifiedName",
+                      "parts": [
+                        "sum"
+                      ]
+                    }
+                  },
+                  "operator": "+",
+                  "right": {
+                    "$type": "NameReference",
+                    "name": {
+                      "$type": "QualifiedName",
+                      "parts": [
+                        "i"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$type": "ExpressionStatement",
+        "expression": {
+          "$type": "PrimaryExpressionCall",
+          "expression": {
+            "$type": "NameReference",
+            "name": {
+              "$type": "QualifiedName",
+              "parts": [
+                "plot"
+              ]
+            }
+          },
+          "arguments": {
+            "$type": "ArgumentList",
+            "arguments": [
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "sum"
+                    ]
+                  }
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "expression": {
+                  "$type": "LiteralString",
+                  "value": "Sum"
+                }
+              },
+              {
+                "$type": "ArgumentDefinition",
+                "name": "color",
+                "expression": {
+                  "$type": "NameReference",
+                  "name": {
+                    "$type": "QualifiedName",
+                    "parts": [
+                      "color",
+                      "blue"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

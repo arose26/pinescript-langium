@@ -1,0 +1,13 @@
+//@version=5
+indicator("Simple Arrow Function with Block", overlay=false)
+
+// Simple arrow function with block
+add(a, b) =>
+    result = a + b
+    result
+
+// Use the function
+value = add(5, 10)
+
+// Plot the result
+plot(value, "Result", color=color.blue)
