@@ -18,6 +18,7 @@ import {
     ForStructureTo,
     ForStructureIn,
     WhileStructure,
+    SwitchStructure,
     FunctionDeclaration,
     // These types are used in type assertions
     // ArrowFunctionExpression,
@@ -130,6 +131,8 @@ export class PineScriptToESTreeConverter {
                     return this.convertForStructure(ast as ForStructureIn);
                 case 'WhileStructure':
                     return this.convertWhileStructure(ast as WhileStructure);
+                case 'SwitchStructure':
+                    return this.convertSwitchStructure(ast as SwitchStructure);
                 case 'FunctionDeclaration':
                 case 'ArrowFunctionExpression':
                 case 'ArrowFunctionBlock':
@@ -141,6 +144,8 @@ export class PineScriptToESTreeConverter {
                 case 'PCAStyleArrowFunctionExpressionDecl':
                 case 'PCAStyleArrowFunctionBlockDecl':
                     return this.convertFunctionDeclaration(ast as FunctionDeclaration);
+                case 'PCAStyleFunctionBody':
+                    return this.convertStatementsToBody(ast as any);
                 case 'ArrayExpression':
                     return this.convertArrayExpression(ast as ArrayExpression);
                 case 'ExpressionStatement':
@@ -219,25 +224,16 @@ export class PineScriptToESTreeConverter {
 
         // Avoid circular references by not logging the entire node
         console.log('StartScript has statements:', !!node.statements);
-        if (node.statements) {
-            console.log('Statements count:', node.statements.statements?.length || 0);
-        }
 
         let body: any[] = [];
 
         try {
-            if (node.statements && node.statements.statements) {
-                body = node.statements.statements.map(stmt => {
-                    try {
-                        return this.convert(stmt);
-                    } catch (error) {
-                        console.error('Error converting statement type:', stmt.$type);
-                        return null;
-                    }
-                }).filter(stmt => stmt !== null);
+            // Convert statements
+            if (node.statements) {
+                body = this.convertStatementsToBody(node.statements);
             }
         } catch (error) {
-            console.error('Error converting statements:', error);
+            console.error('Error converting program content:', error);
         }
 
         return {
@@ -1206,6 +1202,69 @@ export class PineScriptToESTreeConverter {
     }
 
     /**
+     * Convert a SwitchStructure node to an ESTree SwitchStatement node
+     */
+    convertSwitchStructure(node: SwitchStructure): any {
+        console.log('Converting SwitchStructure');
+
+        // Create the discriminant (the expression being switched on)
+        const discriminant = node.expression ? this.convert(node.expression) : {
+            type: 'Literal',
+            value: true,
+            raw: 'true'
+        };
+
+        // Create the cases
+        const cases: any[] = [];
+
+        // Add pattern cases
+        if (node.cases?.patternCases) {
+            for (const patternCase of node.cases.patternCases) {
+                cases.push({
+                    type: 'SwitchCase',
+                    test: this.convert(patternCase.pattern),
+                    consequent: this.convertLocalBlockToStatements(patternCase.block)
+                });
+            }
+        }
+
+        // Add default case if it exists
+        if (node.cases?.defaultCase) {
+            cases.push({
+                type: 'SwitchCase',
+                test: null,
+                consequent: this.convertLocalBlockToStatements(node.cases.defaultCase.block)
+            });
+        }
+
+        return {
+            type: 'SwitchStatement',
+            discriminant,
+            cases
+        };
+    }
+
+    /**
+     * Convert a LocalBlock to an array of statements
+     */
+    convertLocalBlockToStatements(block: any): any[] {
+        if (!block) {
+            console.warn('Null or undefined LocalBlock');
+            return [];
+        }
+
+        if (block.$type === 'IndentedLocalBlock') {
+            return this.convertStatementsToBody(block.statements);
+        } else if (block.$type === 'InlineLocalBlock') {
+            const statement = this.convert(block.statement);
+            return statement ? [statement] : [];
+        }
+
+        console.warn('Unknown LocalBlock type:', block.$type || 'undefined');
+        return [];
+    }
+
+    /**
      * Convert a FunctionDeclaration node to an ESTree FunctionDeclaration node
      * This method handles both regular functions and arrow functions with different body types.
      *
@@ -1249,7 +1308,8 @@ export class PineScriptToESTreeConverter {
             let bodyStatements: Array<{type: string, [key: string]: any}> = [];
 
             // Handle different function types based on the AST node type
-            switch (node.$type) {
+            // Use type assertion to allow any string as the node type
+            switch (node.$type as string) {
                 case 'ArrowFunctionExpression':
                     // Arrow function with simple expression
                     console.log('Processing ArrowFunctionExpression with returnExpr');
@@ -1280,24 +1340,54 @@ export class PineScriptToESTreeConverter {
 
                 case 'ArrowFunctionBlock':
                 case 'RegularFunction':
+                case 'ArrowFunctionBlockDecl':
+                case 'PCAStyleArrowFunctionBlockDecl':
                     // Arrow function with block or regular function
                     console.log(`Processing ${node.$type} with body`);
                     try {
                         const funcWithBody = node as any; // Type assertion to access body
                         if (funcWithBody.body) {
                             // Get the statements from the body
-                            const statements = this.convertStatementsToBody(funcWithBody.body);
+                            let statements: Array<{type: string, [key: string]: any}> = [];
+
+                            // Handle different body types
+                            if (funcWithBody.body.$type === 'PCAStyleFunctionBody') {
+                                // For PCA-style function bodies, convert each statement
+                                const pcaBody = funcWithBody.body as any;
+                                if (pcaBody.statements) {
+                                    statements = pcaBody.statements.map((stmt: any) => this.convert(stmt)).filter(Boolean);
+                                }
+                            } else {
+                                // For regular bodies, use the existing method
+                                statements = this.convertStatementsToBody(funcWithBody.body);
+                            }
 
                             if (statements.length > 0) {
                                 // Make a copy of the statements array to avoid modifying the original
                                 bodyStatements = [...statements];
 
                                 // For arrow functions, convert the last expression statement to a return statement
-                                if (node.$type === 'ArrowFunctionBlock') {
+                                // Use type assertion to allow any string as the node type
+                                const nodeType = node.$type as string;
+                                if (nodeType === 'ArrowFunctionBlock' ||
+                                    nodeType === 'ArrowFunctionBlockDecl' ||
+                                    nodeType === 'PCAStyleArrowFunctionBlockDecl') {
+
+                                    // Check if the last statement is a variable declaration or expression
                                     const lastStatement = bodyStatements[bodyStatements.length - 1];
 
+                                    // If the last statement is just a variable name (implicit return in PineScript)
+                                    if (lastStatement && lastStatement.type === 'ExpressionStatement' &&
+                                        lastStatement.expression && lastStatement.expression.type === 'Identifier') {
+
+                                        // Replace with a return statement
+                                        bodyStatements[bodyStatements.length - 1] = {
+                                            type: 'ReturnStatement',
+                                            argument: lastStatement.expression
+                                        };
+                                    }
                                     // If the last statement is an expression statement, convert it to a return statement
-                                    if (lastStatement && lastStatement.type === 'ExpressionStatement') {
+                                    else if (lastStatement && lastStatement.type === 'ExpressionStatement') {
                                         const returnStatement = {
                                             type: 'ReturnStatement',
                                             argument: lastStatement.expression
@@ -1343,6 +1433,34 @@ export class PineScriptToESTreeConverter {
                     }
                     break;
 
+                case 'PCAStyleArrowFunctionExpressionDecl':
+                    // PCA-style arrow function with simple expression
+                    console.log('Processing PCAStyleArrowFunctionExpressionDecl with returnExpr');
+                    try {
+                        const arrowNode = node as any; // Type assertion to access returnExpr
+                        const returnExprConverted = this.convert(arrowNode.returnExpr);
+                        if (returnExprConverted) {
+                            bodyStatements = [
+                                {
+                                    type: 'ReturnStatement',
+                                    argument: returnExprConverted
+                                }
+                            ];
+                        } else {
+                            console.warn('Failed to convert returnExpr, using empty return');
+                            bodyStatements = [
+                                {
+                                    type: 'ReturnStatement',
+                                    argument: null
+                                }
+                            ];
+                        }
+                    } catch (error: any) {
+                        console.error('Error converting PCA-style arrow function expression:', error);
+                        throw new Error(`Failed to convert PCA-style arrow function expression: ${error?.message || String(error)}`);
+                    }
+                    break;
+
                 default:
                     // Handle legacy or unknown function types
                     console.log('Processing function with unknown or legacy type:', node.$type);
@@ -1368,6 +1486,18 @@ export class PineScriptToESTreeConverter {
                         try {
                             const statements = this.convertStatementsToBody((node as any).body);
                             bodyStatements = [...statements];
+
+                            // Check if this might be an arrow function by its name
+                            if (node.$type && node.$type.includes('Arrow')) {
+                                // Add a return statement for the last expression
+                                const lastStatement = bodyStatements[bodyStatements.length - 1];
+                                if (lastStatement && lastStatement.type === 'ExpressionStatement') {
+                                    bodyStatements[bodyStatements.length - 1] = {
+                                        type: 'ReturnStatement',
+                                        argument: lastStatement.expression
+                                    };
+                                }
+                            }
                         } catch (error: any) {
                             console.error('Error converting legacy body:', error);
                         }

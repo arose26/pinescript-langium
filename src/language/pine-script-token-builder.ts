@@ -15,7 +15,8 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             // Ignore indentation inside parentheses and brackets
             ignoreIndentationDelimiters: [
                 ['LPAR', 'RPAR'],
-                ['LSQB', 'RSQB']
+                ['LSQB', 'RSQB'],
+                ['LBRACE', 'RBRACE']
             ]
         });
     }
@@ -28,7 +29,19 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
 
         // Define custom tokens for comparison operators and arrow
         // Order matters! Define longer patterns first to avoid conflicts
-        // Define arrow token first to give it higher priority
+
+        // Define function arrow token with highest priority for function declarations
+        const funcArrow = createToken({
+            name: 'FUNC_ARROW',
+            pattern: /=>/,
+            line_breaks: false,
+            start_chars_hint: ['='],
+            group: 'function_operator',
+            categories: [{ name: 'operator' }]
+            // Priority is set later in the token dictionary
+        });
+
+        // Define regular arrow token for other uses
         const arrow = createToken({
             name: 'ARROW',
             pattern: /=>/,
@@ -36,8 +49,20 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             start_chars_hint: ['='],
             group: 'operator',
             categories: [{ name: 'operator' }]
-            // Set the highest possible priority for the arrow token in the token dictionary
+            // Priority is set later in the token dictionary
         });
+
+        // Define right arrow token for switch cases
+        const rarrow = createToken({
+            name: 'RARROW',
+            pattern: /->/,
+            line_breaks: false,
+            start_chars_hint: ['-'],
+            group: 'operator',
+            categories: [{ name: 'operator' }]
+        });
+
+
 
         const lessThanEqual = createToken({
             name: 'LessThanEqual',
@@ -78,11 +103,15 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
         // Add custom tokens to the token dictionary
         if (Array.isArray(tokens)) {
             // Order matters! Add longer patterns first
-            return [...tokens, arrow, lessThanEqual, greaterThanEqual, lessThan, greaterThan];
+            return [...tokens, funcArrow, arrow, rarrow, lessThanEqual, greaterThanEqual, lessThan, greaterThan];
         } else if (tokens && typeof tokens === 'object') {
             const tokenDict = tokens as Record<string, any>;
             // Order matters! Add longer patterns first
-            tokenDict['=>'] = arrow;
+
+            // Add both arrow tokens with the same pattern but different names
+            // The function arrow has higher priority
+            tokenDict['=>'] = funcArrow;
+            tokenDict['->'] = rarrow;
             tokenDict['<='] = lessThanEqual;
             tokenDict['>='] = greaterThanEqual;
             tokenDict['<'] = lessThan;
@@ -94,21 +123,42 @@ export class PineScriptTokenBuilder extends IndentationAwareTokenBuilder {
             tokenDict['<='].PATTERN = /<=/;
             tokenDict['>='].PATTERN = />=/;
             tokenDict['=>'].PATTERN = /=>/;
+            tokenDict['->'].PATTERN = /->/;
 
-            // Ensure the arrow token has the highest priority
+            // Ensure the function arrow token has the highest priority
             if (tokenDict['=>']) {
-                // Set the highest possible priority for the arrow token
-                tokenDict['=>'].PRIORITY = 1;
-                // Make sure the arrow token is matched correctly
+                // Set the highest possible priority for the function arrow token
+                tokenDict['=>'].PRIORITY = 10;
+                // Make sure the function arrow token is matched correctly
                 tokenDict['=>'].START_CHARS_HINT = ['='];
-                tokenDict['=>'].GROUP = 'operator';
+                tokenDict['=>'].GROUP = 'function_operator';
                 // Override the token type
-                tokenDict['ARROW'] = tokenDict['=>'];
+                tokenDict['FUNC_ARROW'] = tokenDict['=>'];
+
+                // Create a separate ARROW token with lower priority
+                tokenDict['ARROW'] = arrow;
+                tokenDict['ARROW'].PRIORITY = 2;
+                tokenDict['ARROW'].START_CHARS_HINT = ['='];
+                tokenDict['ARROW'].GROUP = 'operator';
 
                 // Add debug output
                 console.log('Token dictionary keys:', Object.keys(tokenDict));
-                console.log('Arrow token:', tokenDict['=>']);
-                console.log('ARROW token:', tokenDict['ARROW']);
+                console.log('Function Arrow token:', tokenDict['FUNC_ARROW']);
+                console.log('Arrow token:', tokenDict['ARROW']);
+            }
+
+            // Ensure the right arrow token has high priority
+            if (tokenDict['->']) {
+                // Set high priority for the right arrow token
+                tokenDict['->'].PRIORITY = 2;
+                // Make sure the right arrow token is matched correctly
+                tokenDict['->'].START_CHARS_HINT = ['-'];
+                tokenDict['->'].GROUP = 'operator';
+                // Override the token type
+                tokenDict['RARROW'] = tokenDict['->'];
+
+                // Add debug output
+                console.log('RARROW token:', tokenDict['RARROW']);
             }
 
             // Prioritize comparison operators over template specifications

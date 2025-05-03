@@ -42,27 +42,35 @@ CompoundAugAssignment:
     target=AssignmentTarget operator=AugAssignOp expression=StructureExpression;
 
 // Function declaration
+// We also handle the case where the function body contains control flow statements
 FunctionDeclaration:
     export?='export'? method?='method'? name=Name LPAR (parameters=ParameterList)? RPAR (
-        {infer ArrowFunctionExpression} '=>' returnExpr=Expression |
-        {infer ArrowFunctionBlock} '=>' NEWLINE INDENT body=Statements DEDENT |
+        {infer ArrowFunctionExpression} FUNC_ARROW returnExpr=Expression |
+        {infer ArrowFunctionBlock} FUNC_ARROW NEWLINE INDENT body=ArrowFunctionBody DEDENT |
         {infer RegularFunction} NEWLINE INDENT body=Statements DEDENT
     );
 
 // Arrow function declaration - standalone function with arrow syntax
+// We also handle the case where the function body contains control flow statements
 ArrowFunctionDeclaration:
-    name=Name LPAR (parameters=ParameterList)? RPAR '=>' (
+    name=Name LPAR (parameters=ParameterList)? RPAR FUNC_ARROW (
         {infer ArrowFunctionExpressionDecl} returnExpr=Expression |
-        {infer ArrowFunctionBlockDecl} NEWLINE INDENT body=Statements DEDENT
+        {infer ArrowFunctionBlockDecl} NEWLINE INDENT body=ArrowFunctionBody DEDENT
     );
 
 // PCA-style function declaration with named parameters and default values
 // This handles functions like MaxMinNz(value,max=100,min=0,def=50) =>
+// We use a separate rule for the arrow token to avoid conflicts with other arrow tokens
+// We also handle the case where the function body contains control flow statements
 PCAStyleFunctionDeclaration:
-    name=Name LPAR (parameters=PCAStyleParameterList)? RPAR '=>' (
+    name=Name LPAR (parameters=PCAStyleParameterList)? RPAR FUNC_ARROW (
         {infer PCAStyleArrowFunctionExpressionDecl} returnExpr=Expression |
-        {infer PCAStyleArrowFunctionBlockDecl} NEWLINE INDENT body=Statements DEDENT
+        {infer PCAStyleArrowFunctionBlockDecl} NEWLINE INDENT body=PCAStyleFunctionBody DEDENT
     );
+
+// Special body rule for PCA-style functions to handle control flow statements
+PCAStyleFunctionBody:
+    statements+=Statement ((NEWLINE | COMMENT)+ statements+=Statement)* (NEWLINE | COMMENT)*;
 
 // Parameter list for PCA-style function declarations
 PCAStyleParameterList:
@@ -75,11 +83,17 @@ PCAStyleParameterDefinition:
 
 
 // Arrow function expression - used in assignments and other expressions
+// We use a separate rule for the arrow token to avoid conflicts with other arrow tokens
+// We also handle the case where the function body contains control flow statements
 ArrowFunctionExpr:
-    LPAR (parameters=ParameterList)? RPAR '=>' (
+    LPAR (parameters=ParameterList)? RPAR FUNC_ARROW (
         {infer ArrowFunctionExprBody} returnExpr=Expression |
-        {infer ArrowFunctionBlockBody} NEWLINE INDENT body=Statements DEDENT
+        {infer ArrowFunctionBlockBody} NEWLINE INDENT body=ArrowFunctionBody DEDENT
     );
+
+// Special body rule for arrow functions to handle control flow statements
+ArrowFunctionBody:
+    statements=Statements;
 
 
 ParameterList:
@@ -110,7 +124,10 @@ StructureExpression:
 
 // If structure
 IfStructure:
-    'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
+    'if' condition=Expression (
+        (NEWLINE? INDENT thenBlock=Statements DEDENT) |
+        (LBRACE thenBlock=Statements RBRACE)
+    )
     (
         ElseIfClause |
         ElseClause
@@ -118,7 +135,10 @@ IfStructure:
 
 // Else-if clause
 ElseIfClause:
-    'else' 'if' condition=Expression NEWLINE? INDENT thenBlock=Statements DEDENT
+    'else' 'if' condition=Expression (
+        (NEWLINE? INDENT thenBlock=Statements DEDENT) |
+        (LBRACE thenBlock=Statements RBRACE)
+    )
     (
         ElseIfClause |
         ElseClause
@@ -126,7 +146,10 @@ ElseIfClause:
 
 // Else clause
 ElseClause:
-    'else' NEWLINE? INDENT elseBlock=Statements DEDENT;
+    'else' (
+        (NEWLINE? INDENT elseBlock=Statements DEDENT) |
+        (LBRACE elseBlock=Statements RBRACE)
+    );
 
 // For structure
 ForStructure:
@@ -145,18 +168,20 @@ ForIterator:
 WhileStructure:
     'while' condition=Expression NEWLINE? INDENT block=Statements DEDENT;
 
-// Switch structure
+// Switch structure - explicitly uses RARROW token to avoid conflicts with function arrows
 SwitchStructure:
     'switch' (expression=Expression)? NEWLINE INDENT cases=SwitchCases DEDENT;
 
 SwitchCases:
     patternCases+=SwitchPatternCase+ defaultCase=SwitchDefaultCase?;
 
+// Switch pattern case - explicitly uses RARROW token to avoid conflicts with function arrows
 SwitchPatternCase:
-    pattern=Expression '=>' block=LocalBlock;
+    pattern=Expression RARROW block=LocalBlock;
 
+// Switch default case - explicitly uses RARROW token to avoid conflicts with function arrows
 SwitchDefaultCase:
-    '=>' block=LocalBlock;
+    RARROW block=LocalBlock;
 
 // Local block
 LocalBlock:
@@ -370,6 +395,20 @@ terminal LPAR: '(';
 terminal RPAR: ')';
 terminal LSQB: '[';
 terminal RSQB: ']';
+terminal LBRACE: '{';
+terminal RBRACE: '}';
+
+// Function arrow token for function declarations
+// This token has higher priority than ARROW and is used specifically for function declarations
+terminal FUNC_ARROW: '=>';
+
+// Arrow token for other uses
+// This token has lower priority than FUNC_ARROW and is used for other contexts
+terminal ARROW: '=>';
+
+// Right arrow token for switch cases
+// This token is used specifically for switch cases and has a different pattern to avoid conflicts
+terminal RARROW: '->';
 
 
 
