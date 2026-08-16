@@ -1,0 +1,13 @@
+var sum = 0;
+var count = 0;
+for (let i = 1; i <= 10; i++) {
+    sum = sum + i;
+    count = count + 1;
+    if (sum > 20) {
+        break;
+    } else {
+        if (i % 2 == 0) {
+            sum = sum + 5;
+        }
+    }
+}

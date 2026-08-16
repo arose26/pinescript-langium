@@ -1,0 +1,13 @@
+var settings = map.new();
+map.put(settings, 'stopLoss', 0.02);
+map.put(settings, 'takeProfit', 0.05);
+map.put(settings, 'trailingStop', 0.01);
+var stopLoss = map.get(settings, 'stopLoss');
+var takeProfit = map.get(settings, 'takeProfit');
+var defaultValue = map.get(settings, 'nonExistent', 0);
+var hasKey = map.contains(settings, 'stopLoss');
+var removed = map.remove(settings, 'trailingStop');
+var keys = map.keys(settings);
+var values = map.values(settings);
+var size = map.size(settings);
+map.clear(settings);

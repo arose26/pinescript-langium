@@ -1,0 +1,6 @@
+var x = 0;
+var sum = 0;
+while (x < 10) {
+    sum = sum + x;
+    x = x + 1;
+}

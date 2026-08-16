@@ -116,20 +116,82 @@ Verified on Node 26 with the committed lockfile. Use `npm ci` rather than
 `npm install` — resolving the dependency ranges freshly can pull a Langium
 version whose API this code does not target.
 
+## Testing
+
+The suite runs on [Vitest](https://vitest.dev/) and exercises the compiled
+output in `out/`, so it needs a build first:
+
+```bash
+npm ci
+npm run langium:generate
+npm run build
+npm test
+```
+
+What it covers, in `test/`:
+
+- **`lexer.test.ts`** — the indentation machinery, which is the part most likely
+  to break. INDENT/DEDENT synthesis, nested blocks, dedenting several levels at
+  once, closing an open block at end of input, tabs scored as four spaces, CRLF,
+  comments and blank lines, and indentation that does not line up with any open
+  block.
+- **`parser.test.ts`** — declarations, `:=` reassignment, tuple destructuring,
+  if/else and nested if, `for ... to` / `for ... in` / `while`, both function
+  body forms with default parameters, calls with positional and named
+  arguments, qualified names like `ta.ema`, subscripts, ternaries and literals.
+- **`transpiler.test.ts`** — the three transformations that define the project:
+  indentation becomes braces, `:=` becomes `=`, and a block-bodied `f(x) =>`
+  gets an explicit `return` of its final expression. Plus assertions on the
+  ESTree intermediate representation itself.
+- **`validator.test.ts`** — built-in function checking from
+  `src/language/built-ins/`: unknown functions, missing required arguments,
+  unknown named arguments, and the naming-convention diagnostics.
+- **`golden.test.ts`** — every program under `examples/` is transpiled and
+  compared against a committed expectation in `test/__golden__/`. Regenerate
+  after an intentional change with `npx vitest run -u`.
+- **`cli.test.ts`** — the command line entry point as a subprocess, run against
+  copies in a temporary directory so nothing leaks between runs.
+
+**The known bugs are pinned, not hidden.** `test/known-bugs.test.ts` states what
+each defect *should* do and marks it `it.fails`, so those tests go red the day
+someone fixes the bug. The example programs the compiler cannot handle are
+listed by name and reason in `golden.test.ts` and reported as skipped rather
+than blessed with a wrong expectation. A run currently reports 209 passing and
+47 skipped; the skipped ones are that list plus the empty-array case, which
+cannot be executed at all because it does not terminate.
+
 ## Status and limitations
 
 This is a working prototype, not a finished product. Known gaps, honestly
 stated:
 
-- **The `<` operator has a parsing conflict.** Workarounds: reverse the
-  comparison (`5 > x`) or negate (`not (x >= 5)`).
-- **Array support is experimental.** Code generation works; parsing array
-  literals fails in some contexts.
-- **No automated test suite.** Correctness is currently demonstrated by the
-  example programs under `examples/`, checked by hand. This is the most
-  valuable next contribution.
+- **`and` and `or` are dropped.** The ESTree converter has no case for them, so
+  `x > 1 and y > 2` compiles to an empty expression and the emitted JavaScript
+  quietly computes the wrong thing. This is the worst of the lot, because
+  nothing fails loudly.
+- **`else if` collapses onto its parent.** `ElseIfClause` is an unassigned rule
+  call in the grammar, so the else-if overwrites the outer condition and branch
+  instead of nesting under them; the first branch disappears.
+- **`switch` does not parse.** The rules exist but are unreachable from
+  statement position, and the statement is silently dropped from the output.
+- **A statement on the line straight after an indented block does not parse.**
+  A blank line supplies the separator the grammar wants, which is why every
+  working example has one.
+- **Array support is experimental.** Non-empty literals and code generation
+  work. An empty literal (`[]`) sends the parser into a loop that never
+  terminates, and subscript assignment (`a[0] := x`) does not parse.
+- **The `<` operator** was historically in conflict with template
+  specifications. The custom token builder resolves it, and `test/parser.test.ts`
+  covers `<` in while and if conditions, assignments and call arguments to keep
+  it that way.
+- **The library entry point ignores parse errors.**
+  `transpilePineToJavascript` builds the document without validation, so callers
+  get partial JavaScript with no signal that input was dropped. Use the language
+  services directly if diagnostics matter.
 - Coverage of PineScript's standard library is partial — the runtime shim
   implements the commonly used indicators, not the full surface.
+
+Each of these is pinned by a test; see [Testing](#testing).
 
 ## License
 

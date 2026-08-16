@@ -1,0 +1,11 @@
+var sma = ta.sma(close, 14);
+var ema = ta.ema(close, 14);
+var rsi = ta.rsi(close, 14);
+var maxValue = math.max(high, low);
+var minValue = math.min(close, open);
+var absValue = math.abs(close - open);
+var transparentRed = color.new(color.red, 50);
+var customColor = color.rgb(255, 0, 0, 70);
+var period = input.int(14, 'Period', 1, 100);
+var multiplier = input.float(1.5, 'Multiplier');
+var source = input.source(close, 'Source');
