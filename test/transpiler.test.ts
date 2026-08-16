@@ -133,6 +133,53 @@ describe('transpiler: expressions', () => {
     });
 });
 
+describe('transpiler: logical operators', () => {
+    it('emits && for and', async () => {
+        expect(await toJs('var b = x > 1 and y > 2\n')).toBe('var b = x > 1 && y > 2;');
+    });
+
+    it('emits || for or', async () => {
+        expect(await toJs('var b = x > 1 or y > 2\n')).toBe('var b = x > 1 || y > 2;');
+    });
+
+    it('emits a condition inside if', async () => {
+        expect(await toJs('var z = 0\nif x > 1 and y > 2\n    z := 1\n')).toContain('if (x > 1 && y > 2)');
+    });
+
+    it('folds a chain of and left to right', async () => {
+        expect(await toJs('var b = a and b and c\n')).toBe('var b = a && b && c;');
+    });
+
+    it('folds a chain of or left to right', async () => {
+        expect(await toJs('var b = a or b or c\n')).toBe('var b = a || b || c;');
+    });
+
+    it('binds and tighter than or', async () => {
+        // `a or (b and c)`: && sits below || in the tree, so escodegen needs no
+        // parentheses. A flat or wrongly-nested tree would print differently.
+        expect(await toJs('var b = a or b and c\n')).toBe('var b = a || b && c;');
+        expect(await toJs('var b = a and b or c\n')).toBe('var b = a && b || c;');
+    });
+
+    it('keeps the parentheses that override precedence', async () => {
+        expect(await toJs('var b = (a or b) and c\n')).toBe('var b = (a || b) && c;');
+    });
+
+    it('binds not tighter than and', async () => {
+        expect(await toJs('var b = not a and b\n')).toBe('var b = !a && b;');
+    });
+
+    it('produces LogicalExpression nodes rather than BinaryExpression', async () => {
+        const estree = await toEstree('var b = a and b or c\n');
+        expect(estree.body[0].declarations[0].init).toMatchObject({
+            type: 'LogicalExpression',
+            operator: '||',
+            left: { type: 'LogicalExpression', operator: '&&' },
+            right: { type: 'Identifier', name: 'c' }
+        });
+    });
+});
+
 describe('transpiler: ESTree intermediate representation', () => {
     it('produces a Program node', async () => {
         const estree = await toEstree('var a = 1\n');

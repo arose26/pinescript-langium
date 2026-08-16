@@ -11,29 +11,6 @@ import { parseErrors, toJs } from './helpers.js';
  * parser and therefore has to be `it.skip`; running it would never return.
  */
 
-describe('known bug: logical operators are dropped', () => {
-    // The ESTree converter has no case for DisjunctionExpressionRule or
-    // ConjunctionExpressionRule, so `and`/`or` expressions convert to nothing
-    // and escodegen prints an empty statement. This silently produces JavaScript
-    // that compiles and computes the wrong thing, which makes it the most
-    // damaging bug in the list.
-    it.fails('should emit && for and', async () => {
-        expect(await toJs('var b = x > 1 and y > 2\n')).toBe('var b = x > 1 && y > 2;');
-    });
-
-    it.fails('should emit || for or', async () => {
-        expect(await toJs('var b = x > 1 or y > 2\n')).toBe('var b = x > 1 || y > 2;');
-    });
-
-    it('currently emits an empty expression instead (pinned)', async () => {
-        expect(await toJs('var b = x > 1 and y > 2\n')).toBe('var b = ;;');
-    });
-
-    it('currently emits an empty condition inside if (pinned)', async () => {
-        expect(await toJs('var z = 0\nif x > 1 and y > 2\n    z := 1\n')).toContain('if (;)');
-    });
-});
-
 describe('known bug: else-if drops the outer branch', () => {
     // ElseIfClause is an unassigned rule call in pine-script.langium, so the
     // else-if overwrites `condition` and `thenBlock` on its parent IfStructure

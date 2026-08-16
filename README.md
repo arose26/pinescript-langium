@@ -156,8 +156,8 @@ What it covers, in `test/`:
 each defect *should* do and marks it `it.fails`, so those tests go red the day
 someone fixes the bug. The example programs the compiler cannot handle are
 listed by name and reason in `golden.test.ts` and reported as skipped rather
-than blessed with a wrong expectation. A run currently reports 209 passing and
-47 skipped; the skipped ones are that list plus the empty-array case, which
+than blessed with a wrong expectation. A run currently reports 216 passing and
+45 skipped; the skipped ones are that list plus the empty-array case, which
 cannot be executed at all because it does not terminate.
 
 ## Status and limitations
@@ -165,10 +165,6 @@ cannot be executed at all because it does not terminate.
 This is a working prototype, not a finished product. Known gaps, honestly
 stated:
 
-- **`and` and `or` are dropped.** The ESTree converter has no case for them, so
-  `x > 1 and y > 2` compiles to an empty expression and the emitted JavaScript
-  quietly computes the wrong thing. This is the worst of the lot, because
-  nothing fails loudly.
 - **`else if` collapses onto its parent.** `ElseIfClause` is an unassigned rule
   call in the grammar, so the else-if overwrites the outer condition and branch
   instead of nesting under them; the first branch disappears.

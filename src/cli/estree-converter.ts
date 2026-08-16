@@ -32,7 +32,9 @@ import {
     AssignmentTargetName,
     InequalityExpressionRule,
     EqualityExpressionRule,
-    ConditionalExpressionRule
+    ConditionalExpressionRule,
+    ConjunctionExpressionRule,
+    DisjunctionExpressionRule
 } from '../language/generated/ast.js';
 
 /**
@@ -164,6 +166,10 @@ export class PineScriptToESTreeConverter {
                     return this.convertEqualityExpressionRule(ast as EqualityExpressionRule);
                 case 'ConditionalExpressionRule':
                     return this.convertConditionalExpressionRule(ast as ConditionalExpressionRule);
+                case 'ConjunctionExpressionRule':
+                    return this.convertLogicalExpressionRule(ast as ConjunctionExpressionRule, '&&');
+                case 'DisjunctionExpressionRule':
+                    return this.convertLogicalExpressionRule(ast as DisjunctionExpressionRule, '||');
                 case 'SimpleTupleInitialization':
                     return this.convertSimpleTupleInitialization(ast as any);
                 case 'GroupedExpression':
@@ -1683,6 +1689,24 @@ export class PineScriptToESTreeConverter {
             left: this.convert(node.left),
             right: this.convert(pair.right)
         };
+    }
+
+    /**
+     * Convert a ConjunctionExpressionRule (`and`) or DisjunctionExpressionRule
+     * (`or`) node to an ESTree LogicalExpression node.
+     *
+     * The grammar attaches the operands after the first one to a `right` array,
+     * so fold left over it: `a and b and c` becomes `(a && b) && c`. escodegen
+     * derives the parentheses from that shape, so nesting order is what makes
+     * mixed `and`/`or` come out with the right precedence.
+     */
+    convertLogicalExpressionRule(node: ConjunctionExpressionRule | DisjunctionExpressionRule, operator: '&&' | '||'): any {
+        return node.right.reduce((left: any, operand) => ({
+            type: 'LogicalExpression',
+            operator,
+            left,
+            right: this.convert(operand)
+        }), this.convert(node.left));
     }
 
     /**

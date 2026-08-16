@@ -67,12 +67,6 @@ const UNSUPPORTED: Record<string, string> = {
     'simple/array-methods.pine': 'empty array literal `[]` sends the parser into a loop',
     'simple/array-modify.pine': 'subscript assignment `a[0] := x` does not parse',
 
-    // Parsed cleanly but the generated code is wrong, so there is nothing
-    // worth blessing: `and`/`or` convert to an empty expression, producing
-    // `if (;)` and `var signal = ; ? 1 : ...`.
-    'simple/pca-features.pine': 'logical `and`/`or` are dropped by the converter',
-    'simple/ternary-operator.pine': 'logical `and`/`or` are dropped by the converter',
-
     // One-off gaps.
     'complex-test.pine': '`method f(args)` block form without `=>` does not parse',
     'indentation-test.pine': 'multi-line string literals and switch do not parse',
