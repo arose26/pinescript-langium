@@ -6,3 +6,9 @@ node_modules/
 out/
 src/language/generated/
 syntaxes/
+
+dist/
+*.tsbuildinfo
+
+*.ast-debug.json
+

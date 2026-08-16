@@ -1,6 +1,7 @@
 {
     "name": "pinescript-langium",
-    "description": "Please enter a brief description here",
+    "description": "PineScript parser, language server, and transpiler to JavaScript via ESTree",
+    "license": "MIT",
     "version": "0.0.1",
     "files": [
         "bin",
